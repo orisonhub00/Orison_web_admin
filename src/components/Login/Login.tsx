@@ -81,14 +81,7 @@ const [error, setError] = useState("");
     setStage(STAGES.SELECT_METHOD);
   };
 
-  // const handleEmailLogin = () => {
-  //   alert(`✅ Logged in as ${role.toUpperCase()} with EMAIL: ${email}`);
-  //   if (role === "admin") {
-  //   router.push("/dashboard");
-  //   } else {
-  //     router.push("/principal-dashboard"); // optional
-  //   }
-  // };
+  
 
 
 
