@@ -22,6 +22,7 @@ import UploadStudentData from "../Students/upload_student";
 
 
 import { ContentType } from "@/types/content";
+import AddStudentUnified from "../Students/AddStudent";
 
 export default function Dashboard() {
   const [activeContent, setActiveContent] = useState<ContentType>("dashboard");
@@ -41,13 +42,9 @@ export default function Dashboard() {
 
   const renderContent = () => {
     switch (activeContent) {
-      case "add-student":
-  return (
-    <AddStudent 
-      onBack={() => setActiveContent("view-students")}
-      onNext={() => setActiveContent("upload-student-data")}
-    />
-  );
+     case "add-student":
+  return <AddStudentUnified />;
+
       case "view-students":
 return (
     <AllStudents

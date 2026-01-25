@@ -1,180 +1,191 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, Download } from "lucide-react";
+import { Download, Upload, Trash2 } from "lucide-react";
 
-export default function AddStudent({ onBack,onNext }: { onBack: () => void
-    onNext: () => void;
-
- }) {
+export default function AddStudentUnified() {
   const [classes, setClasses] = useState<string[]>([]);
-  const [sections, setSections] = useState<string[]>(["A", "B", "C", "D", "Other"]);
-  const [academicYears, setAcademicYears] = useState<number[]>([]);
-  const [selectedClass, setSelectedClass] = useState("");
-  const [selectedSection, setSelectedSection] = useState("");
-  const [otherSection, setOtherSection] = useState("");
-  const [selectedYear, setSelectedYear] = useState<number | "">("");
+  const [files, setFiles] = useState<{ [cls: string]: File[] }>({});
 
-  // Populate classes and academic years
   useEffect(() => {
-    const romanClasses = ["LKG", "UKG", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
-    setClasses(romanClasses);
-
-    const years: number[] = [];
-    for (let y = 1999; y <= 2045; y++) years.push(y);
-    setAcademicYears(years);
+    const classList = [
+      "Nursery",
+      "LKG",
+      "UKG",
+      "1st class",
+      "2nd class",
+      "3rd class",
+      "4th class",
+      "5th class",
+      "6th class",
+      "7th class",
+      "8th class",
+      "9th class",
+      "10th class",
+    ];
+    setClasses(classList);
   }, []);
 
-  // Handle file download
-  const handleDownload = async () => {
-    const sectionValue = selectedSection === "Other" ? otherSection : selectedSection;
-    if (!selectedClass || !sectionValue || !selectedYear) {
-      alert("Please select Class, Section and Academic Year.");
-      return;
-    }
-
-    const params = new URLSearchParams({
-      class: selectedClass,
-      section: sectionValue,
-      academicYear: selectedYear.toString(),
-    });
-
+  const handleDownload = async (cls: string) => {
     try {
-      const res = await fetch(`${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to download file");
+      const res = await fetch(`https://your-api.com/download?class=${cls}`);
+      if (!res.ok) throw new Error("Download failed");
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `StudentList_${selectedClass}_${sectionValue}_${selectedYear}.xlsx`;
+      link.download = `StudentList_${cls}.xlsx`;
       document.body.appendChild(link);
       link.click();
       link.remove();
-
-            onNext?.();
-
-    } catch (error) {
-      console.error(error);
-      alert("Error downloading file");
+    } catch (err) {
+      console.error(err);
+      alert(`Failed to download file for ${cls}`);
     }
-    finally {
-    // ✅ Navigate to next screen regardless of success/failure
-    onNext?.();
-  }
+  };
+
+  const handleFileChange = (
+    cls: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles) return;
+
+    setFiles((prev) => ({
+      ...prev,
+      [cls]: [...(prev[cls] || []), ...Array.from(selectedFiles)],
+    }));
+  };
+
+  const handleUpload = async (cls: string) => {
+    const clsFiles = files[cls];
+    if (!clsFiles || clsFiles.length === 0) {
+      alert(`Please select file(s) for ${cls}`);
+      return;
+    }
+
+    const formData = new FormData();
+    clsFiles.forEach((f) => formData.append("files", f));
+    formData.append("class", cls);
+
+    try {
+      await fetch("https://your-api.com/upload-student", {
+        method: "POST",
+        body: formData,
+      });
+      alert(`File(s) uploaded for ${cls}`);
+      setFiles((prev) => ({ ...prev, [cls]: [] }));
+    } catch (err) {
+      console.error(err);
+      alert(`Failed to upload file for ${cls}`);
+    }
+  };
+
+  const handleRemoveFile = (cls: string, index: number) => {
+    setFiles((prev) => {
+      const newFiles = [...(prev[cls] || [])];
+      newFiles.splice(index, 1);
+      return { ...prev, [cls]: newFiles };
+    });
   };
 
   return (
-    <div className="w-full">
-      {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white rounded-2xl px-4 sm:px-5 py-3 shadow-sm border border-border">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBack}
-            className="h-9 w-9 rounded-full border border-border flex items-center justify-center hover:bg-muted"
-          >
-            <ChevronLeft size={16} />
-          </button>
-
+    <div className="w-full bg-white rounded-2xl border border-border shadow-sm p-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
           <h2 className="text-[16px] font-semibold text-black">Students</h2>
+          <p className="text-[12px] text-gray-500 mt-1">
+            Please select the class to add the details
+          </p>
         </div>
 
-        <button className="h-9 w-9 rounded-full bg-muted flex items-center justify-center self-end sm:self-auto">
-          <Download size={18} className="text-gray-600" />
+        <button className="bg-[#f25c2a] text-white text-[12px] px-4 py-2 rounded-lg">
+          + Add New student
         </button>
       </div>
 
-      {/* Student Info Card */}
-      <div className="mt-4 bg-white rounded-2xl border border-border shadow-sm p-4 sm:p-5">
-        <h3 className="text-[15px] font-semibold text-black mb-4">Student Info</h3>
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="text-left text-gray-600 border-b">
+              <th className="px-2 py-2 w-[40px]"></th>
+              <th className="px-2 py-2">Student Data</th>
+              <th className="px-2 py-2 text-center">Download File</th>
+              <th className="px-2 py-2 text-center">Upload File</th>
+            </tr>
+          </thead>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Class */}
-          <div>
-            <label className="block text-[12px] font-medium text-gray-600 mb-1">Select Class*</label>
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">Select class</option>
-              {classes.map((cls) => (
-                <option key={cls} value={cls}>
-                  {cls}
-                </option>
-              ))}
-            </select>
-          </div>
+          <tbody>
+            {classes.map((cls) => (
+              <tr key={cls} className="border-b">
+                {/* Checkbox */}
+                <td className="px-2 py-2">
+                  <input type="checkbox" />
+                </td>
 
-          {/* Academic Year */}
-          <div>
-            <label className="block text-[12px] font-medium text-gray-600 mb-1">Select Academic Year</label>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">Select academic year</option>
-              {academicYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </div>
+                {/* Class Name */}
+                <td className="px-2 py-2 text-[#f25c2a]">{cls}</td>
 
-          {/* Section */}
-          <div>
-            <label className="block text-[12px] font-medium text-gray-600 mb-1">Select Section</label>
-            <select
-              value={selectedSection}
-              onChange={(e) => setSelectedSection(e.target.value)}
-              className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">Select section</option>
-              {sections.map((sec) => (
-                <option key={sec} value={sec}>
-                  {sec}
-                </option>
-              ))}
-            </select>
-            {selectedSection === "Other" && (
-              <input
-                type="text"
-                placeholder="Enter section"
-                value={otherSection}
-                onChange={(e) => setOtherSection(e.target.value)}
-                className="mt-2 w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary"
-              />
-            )}
-          </div>
+                {/* Download */}
+                <td className="px-2 py-2 text-center">
+                  <button onClick={() => handleDownload(cls)}>
+                    <Download size={16} className="mx-auto" />
+                  </button>
+                </td>
 
-          {/* Select */}
-          <div>
-            <label className="block text-[12px] font-medium text-gray-600 mb-1">Select</label>
-            <select className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary">
-              <option>Select</option>
-            </select>
-          </div>
+                {/* Upload */}
+                <td className="px-2 py-2 text-center">
+                  <label className="cursor-pointer">
+                    <Upload size={16} className="mx-auto" />
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleFileChange(cls, e)}
+                    />
+                  </label>
 
-          {/* Selection Type */}
-          <div className="sm:col-span-2 lg:col-span-1">
-            <label className="block text-[12px] font-medium text-gray-600 mb-1">Selection</label>
-            <select className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary">
-              <option>Select type</option>
-            </select>
-          </div>
-        </div>
+                  {files[cls]?.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {files[cls].map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between text-[11px] bg-gray-100 px-2 py-1 rounded"
+                        >
+                          <span className="truncate max-w-[140px]">
+                            {file.name}
+                          </span>
+                          <Trash2
+                            size={12}
+                            className="cursor-pointer text-gray-500"
+                            onClick={() => handleRemoveFile(cls, idx)}
+                          />
+                        </div>
+                      ))}
 
-        {/* Download Button */}
-        <div className="mt-6 flex justify-end">
-          <button
-            onClick={handleDownload}
-            className="w-full sm:w-auto bg-[#f25c2a] hover:bg-[#e65324] text-white text-[13px] px-6 py-2.5 rounded-xl shadow transition"
-          >
-            Download File
-          </button>
-        </div>
+                      <button
+                        onClick={() => handleUpload(cls)}
+                        className="mt-1 text-[11px] underline text-gray-600"
+                      >
+                        Upload selected files
+                      </button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Footer */}
+      <div className="flex justify-end mt-4">
+        <button className="bg-[#f25c2a] text-white text-[12px] px-6 py-2 rounded-lg">
+          Continue
+        </button>
       </div>
     </div>
   );

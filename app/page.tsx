@@ -1,8 +1,8 @@
 // update this section
 'use client';
 
+import Homepage from '@/components/Homepage/Homepage';
 import { useState } from 'react';
-import Homepage from '@/src/components/Homepage/Homepage';
 
 export default function Home() {
   const [stage, setStage] = useState('phone');
