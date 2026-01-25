@@ -42,12 +42,11 @@ export default function Dashboard() {
   const renderContent = () => {
     switch (activeContent) {
       case "add-student":
-  return (
-    <AddStudent 
-      onBack={() => setActiveContent("view-students")}
-      onNext={() => setActiveContent("upload-student-data")}
-    />
-  );
+        return 
+        <AddStudent 
+        onBack={() => setActiveContent("view-students")}
+              onNext={() => setActiveContent("upload-student-data")} // ✅ Navigate after download
+ />;
       case "view-students":
 return (
     <AllStudents
