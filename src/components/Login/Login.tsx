@@ -123,7 +123,7 @@ const handleEmailLogin = async () => {
     if (role === "admin") {
       router.push("/dashboard");
     } else {
-      router.push("/principal-dashboard");
+      router.push("/dashboard");
     }
   } catch (err: any) {
     console.error("❌ Login failed:", err);
