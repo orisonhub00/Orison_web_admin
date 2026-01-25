@@ -22,9 +22,18 @@ import UploadStudentData from "../Students/upload_student";
 
 
 import { ContentType } from "@/types/content";
+import CreateClass from "../classes/createclass";
+import ViewClasses from "../classes/viewclasses";
 
 export default function Dashboard() {
   const [activeContent, setActiveContent] = useState<ContentType>("dashboard");
+  const [editingClass, setEditingClass] = useState<{
+  id: string;
+  class_name: string;
+} | null>(null);
+
+
+  
   
   const attendanceData = {
     student: { present: 2400, absent: 67 },
@@ -42,11 +51,39 @@ export default function Dashboard() {
   const renderContent = () => {
     switch (activeContent) {
       case "add-student":
-        return 
-        <AddStudent 
-        onBack={() => setActiveContent("view-students")}
-              onNext={() => setActiveContent("upload-student-data")} // ✅ Navigate after download
- />;
+  return (
+    <AddStudent 
+      onBack={() => setActiveContent("view-students")}
+      onNext={() => setActiveContent("upload-student-data")}
+    />
+  );
+
+case "create-class":
+  return (
+    <CreateClass
+      onBack={() => {
+        setEditingClass(null);
+        setActiveContent("view-classes");
+      }}
+      editingClass={editingClass}
+    />
+  );
+
+
+
+   case "view-classes":
+  return (
+    <ViewClasses
+      onBack={() => setActiveContent("dashboard")}
+      onEditClass={(cls) => {
+        setEditingClass({ id: cls.id, class_name: cls.class_name });
+        setActiveContent("create-class");
+      }}
+    />
+  );
+
+
+
       case "view-students":
 return (
     <AllStudents

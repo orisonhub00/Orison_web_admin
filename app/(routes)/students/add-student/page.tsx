@@ -1,4 +1,9 @@
+
+"use client";
+
 import AddStudent from "@/components/Students/AddStudent";
+
+
 import { useRouter } from "next/navigation";
 
 export default function Page() {
