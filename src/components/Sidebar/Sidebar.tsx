@@ -68,15 +68,25 @@ export default function Sidebar({ onContentChange, activeContent }: SidebarProps
 
       {/* MENU AREA */}
       <div
-        className={`flex-1 transition-all duration-300 px-3 py-5 space-y-3
+        className={`flex-1 transition-all duration-300 px-3  py-5 space-y-3
         ${sidebarOpen
           ? "bg-primary pr-4"     // 🟠 only when open
           : "bg-white pr-2"}                   // ⚪ normal when closed
         `}
       >
+          {/* Dashboard Item */}
+        <SidebarItem 
+          icon={<LayoutGrid size={18} />} 
+          label="Dashboard" 
+          open={sidebarOpen}
+          active={activeContent === "dashboard"}
+          onClick={() => onContentChange("dashboard")
+          }
+          
+        />
         {/* Students Dropdown Card */}
         <div
-          className={`w-full rounded-2xl p-3 shadow transition
+          className={`w-full rounded-2xl  shadow transition
           ${sidebarOpen ? "bg-[#fde8df]" : "bg-transparent shadow-none p-0"}
         `}
         >
@@ -109,7 +119,7 @@ export default function Sidebar({ onContentChange, activeContent }: SidebarProps
                 <button
                 onClick={() => {
                   onContentChange("add-student");
-                  setStudentsOpen(false);
+                  setStudentsOpen(true);
                 }}
                 className={`block w-full text-left text-sm px-4 py-2 rounded-xl transition text-[#8b3a16] ${
                   activeContent === "add-student"
@@ -123,7 +133,7 @@ export default function Sidebar({ onContentChange, activeContent }: SidebarProps
                 <button
                 onClick={() => {
                   onContentChange("view-students");
-                  setStudentsOpen(false);
+                  setStudentsOpen(true);
                 }}
                 className={`block w-full text-left text-sm px-4 py-2 rounded-xl transition text-[#8b3a16] ${
                   activeContent === "view-students"
@@ -137,14 +147,7 @@ export default function Sidebar({ onContentChange, activeContent }: SidebarProps
             )}
         </div>
 
-        {/* Dashboard Item */}
-        <SidebarItem 
-          icon={<LayoutGrid size={18} />} 
-          label="Dashboard" 
-          open={sidebarOpen}
-          active={activeContent === "dashboard"}
-          onClick={() => onContentChange("dashboard")}
-        />
+      
 
         {/* Other Items */}
         <SidebarItem icon={<Users size={18} />} label="Teachers" open={sidebarOpen} />
