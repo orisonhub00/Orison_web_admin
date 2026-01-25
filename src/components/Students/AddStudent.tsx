@@ -150,20 +150,20 @@ export default function AddStudent({ onBack,onNext }: { onBack: () => void
           </div>
 
           {/* Select */}
-          <div>
+          {/* <div>
             <label className="block text-[12px] font-medium text-gray-600 mb-1">Select</label>
             <select className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary">
               <option>Select</option>
             </select>
-          </div>
+          </div> */}
 
           {/* Selection Type */}
-          <div className="sm:col-span-2 lg:col-span-1">
+          {/* <div className="sm:col-span-2 lg:col-span-1">
             <label className="block text-[12px] font-medium text-gray-600 mb-1">Selection</label>
             <select className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary">
               <option>Select type</option>
             </select>
-          </div>
+          </div> */}
         </div>
 
         {/* Download Button */}
