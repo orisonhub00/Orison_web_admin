@@ -11,12 +11,17 @@ import {
 
 import StatCard from "../reuseble_components/StatCard";
 import { Users, GraduationCap, Briefcase } from "lucide-react";
+
 import Sidebar from "../Sidebar/Sidebar";
 import AddStudent from "../Students/AddStudent";
+
 import AllStudents from "../Students/AllStudents";
 import ViewStudent from "../Students/ViewStudent";
+import EditStudent from "../Students/editStudent";
+import UploadStudentData from "../Students/upload_student";
 
-type ContentType = "dashboard" | "add-student" | "view-students" | "view-student";
+
+import { ContentType } from "@/types/content";
 
 export default function Dashboard() {
   const [activeContent, setActiveContent] = useState<ContentType>("dashboard");
@@ -37,11 +42,28 @@ export default function Dashboard() {
   const renderContent = () => {
     switch (activeContent) {
       case "add-student":
-        return <AddStudent onBack={() => setActiveContent("dashboard")} />;
+  return (
+    <AddStudent 
+      onBack={() => setActiveContent("view-students")}
+      onNext={() => setActiveContent("upload-student-data")}
+    />
+  );
       case "view-students":
-        return <AllStudents onViewStudent={() => setActiveContent("view-student")} />;
-      case "view-student":
-        return <ViewStudent onBack={() => setActiveContent("view-students")} />;
+return (
+    <AllStudents
+      onViewStudent={() => setActiveContent("view-student")}
+      onEditStudent={() => setActiveContent("edit-student")}
+      onAddStudent={() => setActiveContent("add-student")}
+    />
+  );
+        case "view-student":
+  return <ViewStudent onBack={() => setActiveContent("view-students")} />;
+
+  case "upload-student-data":
+  return <UploadStudentData onBack={() => setActiveContent("view-students")} />;
+
+case "edit-student":
+  return <EditStudent onBack={() => setActiveContent("view-students")} />;
       case "dashboard":
       default:
         return (
