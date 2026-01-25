@@ -3,6 +3,12 @@
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { setAuthToken } from "@/lib/cookies";
+import { adminLogin } from "@/lib/auth";
+ import toast from "react-hot-toast";
+
+
+
 
 
 export default function Login() {
@@ -20,6 +26,10 @@ export default function Login() {
   };
 
   const [stage, setStage] = useState(STAGES.SELECT_ROLE);
+
+  const [loading, setLoading] = useState(false);
+const [error, setError] = useState("");
+
 
   // ✅ role
   const [role, setRole] = useState(""); // "admin" | "principal"
@@ -71,14 +81,60 @@ export default function Login() {
     setStage(STAGES.SELECT_METHOD);
   };
 
-  const handleEmailLogin = () => {
-    alert(`✅ Logged in as ${role.toUpperCase()} with EMAIL: ${email}`);
+  // const handleEmailLogin = () => {
+  //   alert(`✅ Logged in as ${role.toUpperCase()} with EMAIL: ${email}`);
+  //   if (role === "admin") {
+  //   router.push("/dashboard");
+  //   } else {
+  //     router.push("/principal-dashboard"); // optional
+  //   }
+  // };
+
+
+
+const handleEmailLogin = async () => {
+  if (!isEmailLoginValid) return;
+
+  try {
+    setLoading(true);
+    setError("");
+
+    console.log("🔐 Starting login...");
+    console.log("📨 Email:", email);
+
+    const data = await adminLogin(email, password);
+
+    console.log("🎯 Login success response:", data);
+
+    // Store token in cookie
+    setAuthToken(data.token);
+    console.log("🍪 Token stored successfully:", data.token);
+
+    console.log("📦 Current cookies:", document.cookie);
+
+    // Optional: store user
+    localStorage.setItem("user", JSON.stringify(data.user));
+    console.log("👤 User stored in localStorage:", data.user);
+
+    // Toast instead of alert
+    toast.success("Login successful!");
+
+    // Redirect
     if (role === "admin") {
-    router.push("/dashboard");
+      router.push("/dashboard");
     } else {
-      router.push("/principal-dashboard"); // optional
+      router.push("/principal-dashboard");
     }
-  };
+  } catch (err: any) {
+    console.error("❌ Login failed:", err);
+    setError(err.message || "Invalid credentials");
+    toast.error(err.message || "Login failed");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const handleSendForgotLink = () => {
     // reference flow
@@ -202,6 +258,7 @@ export default function Login() {
           </div>
         )}
 
+
         {/* ✅ STAGE: EMAIL LOGIN */}
         {stage === STAGES.EMAIL_LOGIN && (
           <div className="w-full flex flex-col items-center">
@@ -261,14 +318,19 @@ export default function Login() {
               </div>
 
               {/* Login Button */}
-              <button
-                disabled={!isEmailLoginValid}
-                onClick={handleEmailLogin}
-                className={`w-full rounded-md px-4 py-2 text-[12px] font-semibold transition
-                ${!isEmailLoginValid ? "bg-gray-200 text-gray-400" : "bg-primary text-white hover:opacity-90"}`}
-              >
-                Login
-              </button>
+             <button
+  disabled={!isEmailLoginValid || loading}
+  onClick={handleEmailLogin}
+  className={`w-full rounded-md px-4 py-2 text-[12px] font-semibold transition
+  ${
+    !isEmailLoginValid || loading
+      ? "bg-gray-200 text-gray-400"
+      : "bg-primary text-white hover:opacity-90"
+  }`}
+>
+  {loading ? "Logging in..." : "Login"}
+</button>
+
 
               <button
                 onClick={() => setStage(STAGES.SELECT_METHOD)}
