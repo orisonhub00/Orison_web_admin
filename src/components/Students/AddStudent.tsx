@@ -2,24 +2,34 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, Download } from "lucide-react";
+import { getClasses, getSections } from "@/lib/auth"; // import your API functions
 
-export default function AddStudent({ onBack,onNext }: { onBack: () => void
-    onNext: () => void;
-
- }) {
+export default function AddStudent({ onBack, onNext }: { onBack: () => void; onNext: () => void }) {
   const [classes, setClasses] = useState<string[]>([]);
-  const [sections, setSections] = useState<string[]>(["A", "B", "C", "D", "Other"]);
+  const [sections, setSections] = useState<string[]>([]);
   const [academicYears, setAcademicYears] = useState<number[]>([]);
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [otherSection, setOtherSection] = useState("");
   const [selectedYear, setSelectedYear] = useState<number | "">("");
 
-  // Populate classes and academic years
+  // Fetch classes and sections from API
   useEffect(() => {
-    const romanClasses = ["LKG", "UKG", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
-    setClasses(romanClasses);
+    const fetchData = async () => {
+      try {
+        const classData = await getClasses(); // fetch classes from API
+        setClasses(classData.map((cls: any) => cls.class_name)); // adapt if API returns differently
 
+        const sectionData = await getSections(); // fetch sections from API
+        setSections(sectionData.map((sec: any) => sec.section_name)); // adapt if API returns differently
+      } catch (error) {
+        console.error("Error fetching classes or sections:", error);
+      }
+    };
+
+    fetchData();
+
+    // Populate academic years
     const years: number[] = [];
     for (let y = 1999; y <= 2045; y++) years.push(y);
     setAcademicYears(years);
@@ -51,17 +61,12 @@ export default function AddStudent({ onBack,onNext }: { onBack: () => void
       document.body.appendChild(link);
       link.click();
       link.remove();
-
-            onNext?.();
-
     } catch (error) {
       console.error(error);
       alert("Error downloading file");
+    } finally {
+      onNext?.();
     }
-    finally {
-    // ✅ Navigate to next screen regardless of success/failure
-    onNext?.();
-  }
   };
 
   return (
@@ -75,10 +80,8 @@ export default function AddStudent({ onBack,onNext }: { onBack: () => void
           >
             <ChevronLeft size={16} />
           </button>
-
           <h2 className="text-[16px] font-semibold text-black">Students</h2>
         </div>
-
         <button className="h-9 w-9 rounded-full bg-muted flex items-center justify-center self-end sm:self-auto">
           <Download size={18} className="text-gray-600" />
         </button>
@@ -87,7 +90,6 @@ export default function AddStudent({ onBack,onNext }: { onBack: () => void
       {/* Student Info Card */}
       <div className="mt-4 bg-white rounded-2xl border border-border shadow-sm p-4 sm:p-5">
         <h3 className="text-[15px] font-semibold text-black mb-4">Student Info</h3>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Class */}
           <div>
@@ -137,6 +139,7 @@ export default function AddStudent({ onBack,onNext }: { onBack: () => void
                   {sec}
                 </option>
               ))}
+              <option value="Other">Other</option>
             </select>
             {selectedSection === "Other" && (
               <input
@@ -148,22 +151,6 @@ export default function AddStudent({ onBack,onNext }: { onBack: () => void
               />
             )}
           </div>
-
-          {/* Select */}
-          {/* <div>
-            <label className="block text-[12px] font-medium text-gray-600 mb-1">Select</label>
-            <select className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary">
-              <option>Select</option>
-            </select>
-          </div> */}
-
-          {/* Selection Type */}
-          {/* <div className="sm:col-span-2 lg:col-span-1">
-            <label className="block text-[12px] font-medium text-gray-600 mb-1">Selection</label>
-            <select className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary">
-              <option>Select type</option>
-            </select>
-          </div> */}
         </div>
 
         {/* Download Button */}

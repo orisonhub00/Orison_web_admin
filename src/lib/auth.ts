@@ -148,6 +148,95 @@ export async function deleteClass(id: string) {
 }
 
 
+// --------------------- SECTIONS ---------------------
+export async function getSections() {
+  const token = getAuthToken();
+  if (!token) throw new Error("No admin token found. Please login again.");
+
+  const res = await fetch(`${BASE_URL}/api/v1/sections`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Failed to fetch sections");
+  return data.sections || [];
+}
+
+export async function getSectionById(id: string) {
+  const token = getAuthToken();
+  if (!token) throw new Error("No admin token found. Please login again.");
+
+  const res = await fetch(`${BASE_URL}/api/v1/sections/${id}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Failed to fetch section");
+  return data.section;
+}
+
+export async function createSection(sectionName: string) {
+  const token = getAuthToken();
+  if (!token) throw new Error("No admin token found. Please login again.");
+
+  const res = await fetch(`${BASE_URL}/api/v1/sections/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ section_name: sectionName }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Failed to create section");
+  return data;
+}
+
+export async function updateSection(id: string, sectionName: string) {
+  const token = getAuthToken();
+  if (!token) throw new Error("No admin token found. Please login again.");
+
+  const res = await fetch(`${BASE_URL}/api/v1/sections/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ section_name: sectionName }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Failed to update section");
+  return data;
+}
+
+export async function deleteSection(id: string) {
+  const token = getAuthToken();
+  if (!token) throw new Error("No admin token found. Please login again.");
+
+  const res = await fetch(`${BASE_URL}/api/v1/sections/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Failed to delete section");
+  return data;
+}
+
+
 export async function getClasses() {
   const token = getAuthToken();
   if (!token) throw new Error("No admin token found. Please login again.");
