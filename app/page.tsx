@@ -1,6 +1,5 @@
 'use client';
 
-import Homepage from '@/components/Homepage/Homepage';
 import { useState } from 'react';
 import Homepage from '@/components/Homepage/Homepage'; // ⬅️ fixed import
 
