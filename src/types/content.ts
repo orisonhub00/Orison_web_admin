@@ -7,5 +7,6 @@ export type ContentType =
   | "edit-student"
     | "upload-student-data"
      | "create-class"
-  | "view-classes";// ✅ add this
-;
+  | "view-classes"
+   | "create-section"
+  | "view-sections";

@@ -24,6 +24,8 @@ import UploadStudentData from "../Students/upload_student";
 import { ContentType } from "@/types/content";
 import CreateClass from "../classes/createclass";
 import ViewClasses from "../classes/viewclasses";
+import ViewSections from "../sections/viewsections";
+import CreateSection from "../sections/addsection";
 
 export default function Dashboard() {
   const [activeContent, setActiveContent] = useState<ContentType>("dashboard");
@@ -34,7 +36,11 @@ export default function Dashboard() {
 
 
   
-  
+  const [editingSection, setEditingSection] = useState<{
+  id: string;
+  section_name: string;
+} | null>(null);
+
   const attendanceData = {
     student: { present: 2400, absent: 67 },
     teacher: { present: 180, absent: 12 },
@@ -78,6 +84,30 @@ case "create-class":
       onEditClass={(cls) => {
         setEditingClass({ id: cls.id, class_name: cls.class_name });
         setActiveContent("create-class");
+      }}
+    />
+  );
+
+
+
+case "create-section":
+  return (
+    <CreateSection
+      onBack={() => {
+        setEditingSection(null);
+        setActiveContent("view-sections");
+      }}
+      editingSection={editingSection}
+    />
+  );
+
+case "view-sections":
+  return (
+    <ViewSections
+      onBack={() => setActiveContent("dashboard")}
+      onEditSection={(sec) => {
+        setEditingSection({ id: sec.id, section_name: sec.section_name });
+        setActiveContent("create-section");
       }}
     />
   );

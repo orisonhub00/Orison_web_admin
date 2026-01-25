@@ -31,6 +31,8 @@ export default function Sidebar({ onContentChange, activeContent }: SidebarProps
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [studentsOpen, setStudentsOpen] = useState(false);
   const [classesOpen, setClassesOpen] = useState(false);
+  const [sectionsOpen, setSectionsOpen] = useState(false); // ✅ add this
+
 
 
   return (
@@ -208,6 +210,62 @@ export default function Sidebar({ onContentChange, activeContent }: SidebarProps
     </div>
   )}
 </div>
+
+
+{/* Sections Dropdown Card */}
+<div
+  className={`w-full rounded-2xl shadow transition
+    ${sidebarOpen ? "bg-[#fde8df]" : "bg-transparent shadow-none p-0"}`}
+>
+  <button
+    onClick={() => sidebarOpen && setSectionsOpen(!sectionsOpen)}
+    className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition
+      ${sidebarOpen ? "hover:bg-white/40" : "justify-center hover:bg-muted"}`}
+  >
+    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+      <ClipboardList size={16} className="text-primary" />
+    </div>
+
+    {sidebarOpen && (
+      <>
+        <span className="text-sm font-semibold text-[#8b3a16] flex-1 text-left">
+          Sections
+        </span>
+        <ChevronDown
+          size={16}
+          className={`transition ${sectionsOpen ? "rotate-180" : ""}`}
+        />
+      </>
+    )}
+  </button>
+
+  {sidebarOpen && sectionsOpen && (
+    <div className="mt-3 space-y-2">
+      <button
+        onClick={() => onContentChange("create-section")}
+        className={`block w-full text-left text-sm px-4 py-2 rounded-xl transition text-[#8b3a16] ${
+          activeContent === "create-section"
+            ? "bg-white shadow"
+            : "hover:bg-white/50"
+        }`}
+      >
+        Create Section
+      </button>
+
+      <button
+        onClick={() => onContentChange("view-sections")}
+        className={`block w-full text-left text-sm px-4 py-2 rounded-xl transition text-[#8b3a16] ${
+          activeContent === "view-sections"
+            ? "bg-white shadow"
+            : "hover:bg-white/50"
+        }`}
+      >
+        View Sections
+      </button>
+    </div>
+  )}
+</div>
+
         <SidebarItem icon={<BookOpen size={18} />} label="Subjects" open={sidebarOpen} />
         <SidebarItem icon={<CalendarDays size={18} />} label="Timetable" open={sidebarOpen} />
         <SidebarItem icon={<Building2 size={18} />} label="Staff" open={sidebarOpen} />
