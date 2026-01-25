@@ -18,9 +18,9 @@ import {
   ChevronDown,
 } from "lucide-react";
 import Image from "next/image";
-import logo from "@/public/logo.png";
+import logo from "../../../public/logo.png";
+import { ContentType } from "@/types/content";
 
-type ContentType = "dashboard" | "add-student" | "view-students" | "view-student";
 
 interface SidebarProps {
   onContentChange: (content: ContentType) => void;

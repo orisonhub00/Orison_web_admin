@@ -1,144 +1,181 @@
 "use client";
 
-import React from "react";
-import { ChevronLeft, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronLeft, Download } from "lucide-react";
 
-interface AddStudentProps {
-  onBack?: () => void;
-}
+export default function AddStudent({ onBack,onNext }: { onBack: () => void
+    onNext: () => void;
 
-export default function AddStudent({ onBack }: AddStudentProps) {
+ }) {
+  const [classes, setClasses] = useState<string[]>([]);
+  const [sections, setSections] = useState<string[]>(["A", "B", "C", "D", "Other"]);
+  const [academicYears, setAcademicYears] = useState<number[]>([]);
+  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedSection, setSelectedSection] = useState("");
+  const [otherSection, setOtherSection] = useState("");
+  const [selectedYear, setSelectedYear] = useState<number | "">("");
+
+  // Populate classes and academic years
+  useEffect(() => {
+    const romanClasses = ["LKG", "UKG", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+    setClasses(romanClasses);
+
+    const years: number[] = [];
+    for (let y = 1999; y <= 2045; y++) years.push(y);
+    setAcademicYears(years);
+  }, []);
+
+  // Handle file download
+  const handleDownload = async () => {
+    const sectionValue = selectedSection === "Other" ? otherSection : selectedSection;
+    if (!selectedClass || !sectionValue || !selectedYear) {
+      alert("Please select Class, Section and Academic Year.");
+      return;
+    }
+
+    const params = new URLSearchParams({
+      class: selectedClass,
+      section: sectionValue,
+      academicYear: selectedYear.toString(),
+    });
+
+    try {
+      const res = await fetch(`${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to download file");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `StudentList_${selectedClass}_${sectionValue}_${selectedYear}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+            onNext?.();
+
+    } catch (error) {
+      console.error(error);
+      alert("Error downloading file");
+    }
+    finally {
+    // ✅ Navigate to next screen regardless of success/failure
+    onNext?.();
+  }
+  };
+
   return (
-    <div className="w-full min-h-screen bg-[#f5f6fa] p-6">
-      {/* Top Header */}
-      <div className="flex items-center justify-between bg-white rounded-xl px-6 py-4 shadow-sm border border-gray-100">
-        <h2 className="text-[15px] font-semibold text-[#1f2937]">Students</h2>
-
-        <button className="h-9 w-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition">
-          <User size={16} />
-        </button>
-      </div>
-
-      {/* Breadcrumb */}
-      <div className="mt-4 flex items-center gap-2 text-[13px] text-gray-500">
-        <span className="text-gray-800 font-medium">Add Student</span>
-      </div>
-
-      {/* Back + Title (like screenshot left arrow Add Student) */}
-      <div className="mt-3 flex items-center gap-2 text-gray-700">
-        <button
-          onClick={onBack}
-          className="flex items-center justify-center hover:bg-gray-100 rounded-lg p-1 transition"
-        >
-          <ChevronLeft size={18} className="text-gray-500" />
-        </button>
-        <h3 className="text-[14px] font-semibold text-gray-700">Add Student</h3>
-      </div>
-
-      {/* Form Card */}
-      <div className="mt-4 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* 1 */}
-          <Field label="Student Name" placeholder="Enter project title" />
-
-          {/* 2 */}
-          <Field label="Admission no *" placeholder="Enter Mandal/Village name" />
-
-          {/* 3 */}
-          <SelectField label="Class" placeholder="Select Class" />
-
-          {/* 4 */}
-          <SelectField label="Section" placeholder="Select section" />
-
-          {/* 5 */}
-          <SelectField label="Academic year" placeholder="select section" />
-
-          {/* 6 */}
-          <Field label="Status" placeholder="Active/Tc/Dropout" />
-
-          {/* 7 */}
-          <Field label="Blood group" placeholder="Enter Name" />
-
-          {/* 8 */}
-          <Field label="Date of Birth" placeholder="Select Date of Preparation" />
-
-          {/* 9 */}
-          <SelectField label="Gender" placeholder="Select Gender" />
-
-          {/* 10 */}
-          <Field label="Aadhar no" placeholder="Active/Tc/Dropout" />
-
-          {/* 11 */}
-          <Field label="Father Name" placeholder="Enter Name" />
-
-          {/* 12 */}
-          <Field label="Mobile num" placeholder="Select Date of Preparation" />
-
-          {/* 13 */}
-          <Field label="Mother name" placeholder="Active/Tc/Dropout" />
-
-          {/* 14 */}
-          <Field label="Mobile no" placeholder="Active/Tc/Dropout" />
-
-          {/* 15 */}
-          <Field label="emergency contact" placeholder="Enter Name" />
-
-          {/* 16 */}
-          <Field label="Guardian name" placeholder="gaurdian name" />
-        </div>
-
-        {/* Buttons */}
-        <div className="flex justify-end gap-3 mt-10">
+    <div className="w-full">
+      {/* Top Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white rounded-2xl px-4 sm:px-5 py-3 shadow-sm border border-border">
+        <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="px-6 py-2 text-[13px] rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
+            className="h-9 w-9 rounded-full border border-border flex items-center justify-center hover:bg-muted"
           >
-            Cancel
+            <ChevronLeft size={16} />
           </button>
 
-          <button className="px-6 py-2 text-[13px] rounded-lg bg-[#ff6b35] text-white hover:opacity-90 transition">
-            Save & Continue
+          <h2 className="text-[16px] font-semibold text-black">Students</h2>
+        </div>
+
+        <button className="h-9 w-9 rounded-full bg-muted flex items-center justify-center self-end sm:self-auto">
+          <Download size={18} className="text-gray-600" />
+        </button>
+      </div>
+
+      {/* Student Info Card */}
+      <div className="mt-4 bg-white rounded-2xl border border-border shadow-sm p-4 sm:p-5">
+        <h3 className="text-[15px] font-semibold text-black mb-4">Student Info</h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Class */}
+          <div>
+            <label className="block text-[12px] font-medium text-gray-600 mb-1">Select Class*</label>
+            <select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="">Select class</option>
+              {classes.map((cls) => (
+                <option key={cls} value={cls}>
+                  {cls}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Academic Year */}
+          <div>
+            <label className="block text-[12px] font-medium text-gray-600 mb-1">Select Academic Year</label>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="">Select academic year</option>
+              {academicYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Section */}
+          <div>
+            <label className="block text-[12px] font-medium text-gray-600 mb-1">Select Section</label>
+            <select
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
+              className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="">Select section</option>
+              {sections.map((sec) => (
+                <option key={sec} value={sec}>
+                  {sec}
+                </option>
+              ))}
+            </select>
+            {selectedSection === "Other" && (
+              <input
+                type="text"
+                placeholder="Enter section"
+                value={otherSection}
+                onChange={(e) => setOtherSection(e.target.value)}
+                className="mt-2 w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary"
+              />
+            )}
+          </div>
+
+          {/* Select */}
+          <div>
+            <label className="block text-[12px] font-medium text-gray-600 mb-1">Select</label>
+            <select className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary">
+              <option>Select</option>
+            </select>
+          </div>
+
+          {/* Selection Type */}
+          <div className="sm:col-span-2 lg:col-span-1">
+            <label className="block text-[12px] font-medium text-gray-600 mb-1">Selection</label>
+            <select className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary">
+              <option>Select type</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Download Button */}
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={handleDownload}
+            className="w-full sm:w-auto bg-[#f25c2a] hover:bg-[#e65324] text-white text-[13px] px-6 py-2.5 rounded-xl shadow transition"
+          >
+            Download File
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ✅ Small Reusable Components */
-
-function Field({
-  label,
-  placeholder,
-}: {
-  label: string;
-  placeholder: string;
-}) {
-  return (
-    <div>
-      <label className="block text-[12px] text-gray-600 mb-2">{label}</label>
-      <input
-        type="text"
-        placeholder={placeholder}
-        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] text-gray-800 outline-none focus:ring-2 focus:ring-gray-200"
-      />
-    </div>
-  );
-}
-
-function SelectField({
-  label,
-  placeholder,
-}: {
-  label: string;
-  placeholder: string;
-}) {
-  return (
-    <div>
-      <label className="block text-[12px] text-gray-600 mb-2">{label}</label>
-      <select className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] text-gray-700 outline-none focus:ring-2 focus:ring-gray-200">
-        <option>{placeholder}</option>
-      </select>
     </div>
   );
 }
