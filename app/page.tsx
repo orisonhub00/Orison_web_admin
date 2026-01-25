@@ -1,12 +1,11 @@
-// update this section
 'use client';
 
 import { useState } from 'react';
-import Homepage from '@/src/components/Homepage/Homepage';
+import Homepage from '@/components/Homepage/Homepage'; // ⬅️ fixed import
 
 export default function Home() {
   const [stage, setStage] = useState('phone');
-  const [phone, setPhone] = useState<string | undefined>(undefined); // Changed initial value to undefined
+  const [phone, setPhone] = useState<string | undefined>(undefined); 
   const [otp, setOtp] = useState('');
 
   return (

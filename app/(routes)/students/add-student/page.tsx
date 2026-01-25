@@ -1,5 +1,13 @@
-import AddStudent from "../../../../src/components/Students/AddStudent";
+import AddStudent from "@/components/Students/AddStudent";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
-  return <AddStudent />;
+  const router = useRouter();
+
+  return (
+    <AddStudent
+      onBack={() => router.back()}
+      onNext={() => router.push("/students/view")}
+    />
+  );
 }
