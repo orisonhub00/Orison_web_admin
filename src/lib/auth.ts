@@ -31,12 +31,7 @@ export async function adminLogin(email: string, password: string) {
 
 export async function createClass(className: string) {
   const token = getAuthToken();
-  if (!token) {
-    throw new Error("No admin token found. Please login again.");
-  }
-
-  console.log("📡 Calling Create Class API...");
-  console.log("➡️ Request payload:", { class_name: className });
+  if (!token) throw new Error("No admin token found. Please login again.");
 
   const res = await fetch(`${BASE_URL}/api/v1/classes/create`, {
     method: "POST",
@@ -44,53 +39,45 @@ export async function createClass(className: string) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ class_name: className }),
+    body: JSON.stringify({ class_name: className }), // ✅ no status
   });
 
-  console.log("📥 Raw response status:", res.status);
   const data = await res.json();
-  console.log("📥 API response data:", data);
-
-  if (!res.ok || !data.success) {
-    console.error("❌ Create class error:", data.message || "Failed to create class");
-    throw new Error(data.message || "Failed to create class");
-  }
-
-  console.log("✅ Class created successfully!");
+  if (!res.ok || !data.success) throw new Error(data.message || "Failed to create class");
   return data;
 }
 
 
-export async function updateClass(id: string, className: string) {
+export async function updateClass(
+  id: string,
+  className: string,
+  status: "active" | "inactive"
+) {
   const token = getAuthToken();
   if (!token) {
     throw new Error("No admin token found. Please login again.");
   }
 
-  console.log("📡 Calling Update Class API...");
-  console.log("➡️ Request payload:", { class_name: className });
-
   const res = await fetch(`${BASE_URL}/api/v1/classes/${id}`, {
-    method: "PUT", // or PATCH if your backend expects PATCH
+    method: "PUT",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ class_name: className }),
+    body: JSON.stringify({
+      class_name: className,
+      status: status, // ✅ send status
+    }),
   });
 
-  console.log("📥 Raw response status:", res.status);
   const data = await res.json();
-  console.log("📥 API response data:", data);
-
   if (!res.ok || !data.success) {
-    console.error("❌ Update class error:", data.message || "Failed to update class");
     throw new Error(data.message || "Failed to update class");
   }
 
-  console.log("✅ Class updated successfully!");
   return data;
 }
+
 
 
 export async function getClassById(id: string) {
@@ -201,7 +188,11 @@ export async function createSection(sectionName: string) {
   return data;
 }
 
-export async function updateSection(id: string, sectionName: string) {
+export async function updateSection(
+  id: string,
+  sectionName: string,
+  status: "active" | "inactive"
+) {
   const token = getAuthToken();
   if (!token) throw new Error("No admin token found. Please login again.");
 
@@ -211,13 +202,19 @@ export async function updateSection(id: string, sectionName: string) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ section_name: sectionName }),
+    body: JSON.stringify({
+      section_name: sectionName,
+      status: status, // ✅ include status like updateClass
+    }),
   });
 
   const data = await res.json();
-  if (!res.ok || !data.success) throw new Error(data.message || "Failed to update section");
+  if (!res.ok || !data.success)
+    throw new Error(data.message || "Failed to update section");
+
   return data;
 }
+
 
 export async function deleteSection(id: string) {
   const token = getAuthToken();
@@ -259,5 +256,8 @@ export async function getClasses() {
     throw new Error(data.message || "Failed to fetch classes");
   }
 
-  return data.classes || []; // adjust according to API response
-}
+return data.classes.map((cls: any) => ({
+    id: cls.id,
+    class_name: cls.class_name,
+    status: cls.status || "active", // default fallback
+  }));}

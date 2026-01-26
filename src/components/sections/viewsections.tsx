@@ -11,7 +11,7 @@ import {
 interface SectionType {
   id: string;
   section_name: string;
-  status?: string;
+  status?: "active" | "inactive";
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -32,12 +32,18 @@ export default function ViewSections({
     useState<SectionDetailType | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  // Fetch sections
   useEffect(() => {
     const fetchSections = async () => {
       setLoading(true);
       try {
         const sectionList = await getSections();
-        setSections(sectionList);
+        setSections(
+          sectionList.map((sec: SectionType) => ({
+            ...sec,
+            status: sec.status || "active", // ensure status is always set
+          }))
+        );
       } catch (error: any) {
         console.error(error);
         alert(`❌ Error fetching sections: ${error.message}`);
@@ -52,7 +58,7 @@ export default function ViewSections({
     setDetailLoading(true);
     try {
       const sec = await getSectionById(id);
-      setSelectedSection(sec);
+      setSelectedSection({ ...sec, status: sec.status || "active" });
     } catch (error: any) {
       console.error(error);
       alert(`❌ ${error.message}`);
@@ -78,6 +84,7 @@ export default function ViewSections({
 
   const handleBackFromDetail = () => setSelectedSection(null);
 
+  // ------------------- DETAIL VIEW -------------------
   if (selectedSection) {
     return (
       <div className="w-full px-4">
@@ -99,6 +106,10 @@ export default function ViewSections({
               {selectedSection.section_name}
             </div>
             <div>
+              <span className="font-medium text-gray-700">Status: </span>
+              {selectedSection.status === "active" ? "Active" : "Inactive"}
+            </div>
+            <div>
               <span className="font-medium text-gray-700">Created At: </span>
               {new Date(selectedSection.createdAt).toLocaleString()}
             </div>
@@ -112,6 +123,7 @@ export default function ViewSections({
     );
   }
 
+  // ------------------- LIST VIEW -------------------
   return (
     <div className="w-full px-4">
       <button
@@ -134,13 +146,27 @@ export default function ViewSections({
                 className="flex justify-between items-center w-full bg-white rounded-2xl shadow p-4 border border-gray-200 cursor-pointer hover:bg-gray-50 transition"
                 onClick={() => fetchSectionDetails(s.id)}
               >
-                <span className="text-gray-700 font-medium">{s.section_name}</span>
+                <span className="text-gray-700 font-medium">
+                  {s.section_name}{" "}
+                  <span
+                    className={`ml-2 px-2 py-0.5 text-xs rounded-full font-medium ${
+                      s.status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {s.status === "active" ? "Active" : "Inactive"}
+                  </span>
+                </span>
 
                 <div className="flex gap-3">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onEditSection(s);
+                      onEditSection({
+                        ...s,
+                        status: s.status || "active", // ensure status is passed
+                      });
                     }}
                     className="text-blue-500 hover:text-blue-700"
                   >
