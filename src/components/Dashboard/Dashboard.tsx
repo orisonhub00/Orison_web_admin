@@ -29,16 +29,19 @@ import CreateSection from "../sections/addsection";
 
 export default function Dashboard() {
   const [activeContent, setActiveContent] = useState<ContentType>("dashboard");
-  const [editingClass, setEditingClass] = useState<{
+ const [editingClass, setEditingClass] = useState<{
   id: string;
   class_name: string;
+  status: string;
 } | null>(null);
+
 
 
   
   const [editingSection, setEditingSection] = useState<{
   id: string;
   section_name: string;
+  status?: string; // optional
 } | null>(null);
 
   const attendanceData = {
@@ -88,10 +91,11 @@ case "create-class":
   return (
     <ViewClasses
       onBack={() => setActiveContent("dashboard")}
-      onEditClass={(cls) => {
-        setEditingClass({ id: cls.id, class_name: cls.class_name });
-        setActiveContent("create-class");
-      }}
+    onEditClass={(cls) => {
+  setEditingClass({ id: cls.id, class_name: cls.class_name, status: cls.status });
+  setActiveContent("create-class");
+}}
+
     />
   );
 
@@ -104,7 +108,7 @@ case "create-section":
         setEditingSection(null);
         setActiveContent("view-sections");
       }}
-      editingSection={editingSection}
+  editingSection={editingSection}
     />
   );
 
@@ -112,10 +116,15 @@ case "view-sections":
   return (
     <ViewSections
       onBack={() => setActiveContent("dashboard")}
-      onEditSection={(sec) => {
-        setEditingSection({ id: sec.id, section_name: sec.section_name });
-        setActiveContent("create-section");
-      }}
+    onEditSection={(sec) => {
+  setEditingSection({
+    id: sec.id,
+    section_name: sec.section_name,
+    status: sec.status || "active", // ✅ include status here
+  });
+  setActiveContent("create-section");
+}}
+
     />
   );
 
