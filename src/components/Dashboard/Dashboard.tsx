@@ -13,8 +13,8 @@ import StatCard from "../reuseble_components/StatCard";
 import { Users, GraduationCap, Briefcase } from "lucide-react";
 
 import Sidebar from "../Sidebar/Sidebar";
-import AddStudent from "../Students/AddStudent";
-
+// import AddStudent from "../Students/AddStudent";
+import StudentDataScreen from "../Students/studentdata"
 import AllStudents from "../Students/AllStudents";
 import ViewStudent from "../Students/ViewStudent";
 import EditStudent from "../Students/editStudent";
@@ -59,11 +59,18 @@ export default function Dashboard() {
 
   const renderContent = () => {
     switch (activeContent) {
-      case "add-student":
+  //     case "add-student":
+  // return (
+  //   <AddStudent 
+  //     onBack={() => setActiveContent("view-students")}
+  //     onNext={() => setActiveContent("upload-student-data")}
+  //   />
+  // );
+
+  case "add-student":
   return (
-    <AddStudent 
+    <StudentDataScreen
       onBack={() => setActiveContent("view-students")}
-      onNext={() => setActiveContent("upload-student-data")}
     />
   );
 
