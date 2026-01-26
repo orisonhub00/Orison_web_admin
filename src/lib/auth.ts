@@ -150,7 +150,12 @@ export async function getSections() {
 
   const data = await res.json();
   if (!res.ok || !data.success) throw new Error(data.message || "Failed to fetch sections");
-  return data.sections || [];
+
+  return data.sections.map((sec: any) => ({
+    id: sec.id,
+    section_name: sec.section_name,
+    status: sec.status || "active",
+  }));
 }
 
 export async function getSectionById(id: string) {
@@ -232,6 +237,112 @@ export async function deleteSection(id: string) {
   if (!res.ok || !data.success) throw new Error(data.message || "Failed to delete section");
   return data;
 }
+
+
+// ===== Academic Years =====
+
+export async function createAcademicYear(yearName: string) {
+  const token = getAuthToken();
+
+  const res = await fetch(`${BASE_URL}/api/v1/academicyear/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ year_name: yearName }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || "Failed to create academic year");
+  }
+
+  return data.data;
+}
+
+export async function getAcademicYears(search = "", page = 1, limit = 20) {
+  const token = getAuthToken();
+
+  const res = await fetch(
+    `${BASE_URL}/api/v1/academicyear`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || "Failed to fetch academic years");
+  }
+
+  return data.data;
+}
+
+export async function getAcademicYearById(id: string) {
+  const token = getAuthToken();
+
+  const res = await fetch(`${BASE_URL}/api/v1/academicyear/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || "Failed to fetch academic year");
+  }
+
+  return data.data;
+}
+
+export async function updateAcademicYear(
+  id: string,
+  yearName: string,
+  status: "active" | "inactive"
+) {
+  const token = getAuthToken();
+
+  const res = await fetch(`${BASE_URL}/api/v1/academicyear/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      year_name: yearName,
+      status,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || "Failed to update academic year");
+  }
+
+  return data.data;
+}
+
+export async function deleteAcademicYear(id: string) {
+  const token = getAuthToken();
+
+  const res = await fetch(`${BASE_URL}/api/v1/academicyear/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || "Failed to delete academic year");
+  }
+
+  return data;
+}
+
 
 
 export async function getClasses() {

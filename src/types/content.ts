@@ -9,4 +9,7 @@ export type ContentType =
      | "create-class"
   | "view-classes"
    | "create-section"
-  | "view-sections";
+  | "view-sections"
+  
+   | "create-academic-year"
+  | "view-academic-years";;

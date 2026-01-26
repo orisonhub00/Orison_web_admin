@@ -2,38 +2,51 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, Download } from "lucide-react";
-import { getClasses, getSections } from "@/lib/auth"; // import your API functions
+import { getAcademicYears, getClasses, getSections } from "@/lib/auth"; // import your API functions
 
 export default function AddStudent({ onBack, onNext }: { onBack: () => void; onNext: () => void }) {
   const [classes, setClasses] = useState<string[]>([]);
   const [sections, setSections] = useState<string[]>([]);
-  const [academicYears, setAcademicYears] = useState<number[]>([]);
-  const [selectedClass, setSelectedClass] = useState("");
+const [academicYears, setAcademicYears] = useState<string[]>([]);
+const [selectedYear, setSelectedYear] = useState<string>("");  const [selectedClass, setSelectedClass] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [otherSection, setOtherSection] = useState("");
-  const [selectedYear, setSelectedYear] = useState<number | "">("");
 
   // Fetch classes and sections from API
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const classData = await getClasses(); // fetch classes from API
-        setClasses(classData.map((cls: any) => cls.class_name)); // adapt if API returns differently
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      // ----- Classes -----
+      const classData = await getClasses();
+      const activeClasses = classData
+        .filter((cls: any) => cls.status === "active")
+        .map((cls: any) => cls.class_name);
 
-        const sectionData = await getSections(); // fetch sections from API
-        setSections(sectionData.map((sec: any) => sec.section_name)); // adapt if API returns differently
-      } catch (error) {
-        console.error("Error fetching classes or sections:", error);
-      }
-    };
+      setClasses(activeClasses);
 
-    fetchData();
+      // ----- Sections -----
+      const sectionData = await getSections();
+      const activeSections = sectionData
+        .filter((sec: any) => sec.status === "active")
+        .map((sec: any) => sec.section_name);
 
-    // Populate academic years
-    const years: number[] = [];
-    for (let y = 1999; y <= 2045; y++) years.push(y);
-    setAcademicYears(years);
-  }, []);
+      setSections(activeSections);
+
+      // ----- Academic Years -----
+      const yearData = await getAcademicYears();
+      const activeYears = yearData
+        .filter((yr: any) => yr.status === "active")
+  .map((yr: any) => yr.year_name); // ✅ keep as string
+
+      setAcademicYears(activeYears);
+    } catch (error) {
+      console.error("Error fetching classes, sections or academic years:", error);
+    }
+  };
+
+  fetchData();
+}, []);
+
 
   // Handle file download
   const handleDownload = async () => {
@@ -46,7 +59,7 @@ export default function AddStudent({ onBack, onNext }: { onBack: () => void; onN
     const params = new URLSearchParams({
       class: selectedClass,
       section: sectionValue,
-      academicYear: selectedYear.toString(),
+  academicYear: selectedYear, // ✅ already string
     });
 
     try {
@@ -111,18 +124,19 @@ export default function AddStudent({ onBack, onNext }: { onBack: () => void; onN
           {/* Academic Year */}
           <div>
             <label className="block text-[12px] font-medium text-gray-600 mb-1">Select Academic Year</label>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="">Select academic year</option>
-              {academicYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+           <select
+  value={selectedYear}
+  onChange={(e) => setSelectedYear(e.target.value)}
+  className="w-full border border-border rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-1 focus:ring-primary"
+>
+  <option value="">Select academic year</option>
+  {academicYears.map((year) => (
+    <option key={year} value={year}>
+      {year}
+    </option>
+  ))}
+</select>
+
           </div>
 
           {/* Section */}

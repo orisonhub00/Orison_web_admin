@@ -26,6 +26,8 @@ import CreateClass from "../classes/createclass";
 import ViewClasses from "../classes/viewclasses";
 import ViewSections from "../sections/viewsections";
 import CreateSection from "../sections/addsection";
+import CreateAcademicYear from "../academicyears/CreateAcademicYear";
+import ViewAcademicYears from "../academicyears/ViewAcademicYears";
 
 export default function Dashboard() {
   const [activeContent, setActiveContent] = useState<ContentType>("dashboard");
@@ -36,6 +38,11 @@ export default function Dashboard() {
 } | null>(null);
 
 
+const [editingYear, setEditingYear] = useState<{
+  id: string;
+  year_name: string;
+  status: string;
+} | null>(null);
 
   
   const [editingSection, setEditingSection] = useState<{
@@ -96,6 +103,33 @@ case "create-class":
   setActiveContent("create-class");
 }}
 
+    />
+  );
+
+
+  case "create-academic-year":
+  return (
+    <CreateAcademicYear
+      onBack={() => {
+        setEditingYear(null);
+        setActiveContent("view-academic-years");
+      }}
+      editingYear={editingYear}
+    />
+  );
+
+case "view-academic-years":
+  return (
+    <ViewAcademicYears
+      onBack={() => setActiveContent("dashboard")}
+      onEditYear={(yr) => {
+        setEditingYear({
+          id: yr.id,
+          year_name: yr.year_name,
+          status: yr.status,
+        });
+        setActiveContent("create-academic-year");
+      }}
     />
   );
 
