@@ -7,13 +7,11 @@ import { getClassById, getClasses, deleteClass } from "@/lib/auth";
 interface ClassType {
   id: string;
   class_name: string;
-  status: string;
+  status: "active" | "inactive";
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
 }
-
-interface ClassDetailType extends ClassType {}
 
 export default function ViewClasses({
   onBack,
@@ -25,130 +23,178 @@ export default function ViewClasses({
   const [classes, setClasses] = useState<ClassType[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] =
-    useState<ClassDetailType | null>(null);
+    useState<ClassType | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  /* ---------- FETCH CLASSES ---------- */
   useEffect(() => {
     const fetchClasses = async () => {
       setLoading(true);
       try {
-        const classList = await getClasses();
-        if (Array.isArray(classList)) setClasses(classList);
-        else throw new Error("Invalid API response format");
+        const data = await getClasses();
+        setClasses(
+          data.map((c: ClassType) => ({
+            ...c,
+            status: c.status || "active",
+          }))
+        );
       } catch (error: any) {
-        console.error(error);
-        alert(`❌ Error fetching classes: ${error.message}`);
+        alert(error.message);
       } finally {
         setLoading(false);
       }
     };
-
     fetchClasses();
   }, []);
 
+  /* ---------- FETCH DETAILS ---------- */
   const fetchClassDetails = async (id: string) => {
     setDetailLoading(true);
     try {
       const cls = await getClassById(id);
-      setSelectedClass(cls);
+      setSelectedClass({ ...cls, status: cls.status || "active" });
     } catch (error: any) {
-      console.error(error);
-      alert(`❌ ${error.message}`);
+      alert(error.message);
     } finally {
       setDetailLoading(false);
     }
   };
 
-  // ✅ Updated handleDelete to call API
+  /* ---------- DELETE ---------- */
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this class?")) return;
-
     try {
-      setLoading(true);
-      await deleteClass(id); // call API
-      setClasses((prev) => prev.filter((cls) => cls.id !== id)); // update UI
-      alert("✅ Class deleted successfully");
+      await deleteClass(id);
+      setClasses((prev) => prev.filter((c) => c.id !== id));
+      alert("Class deleted successfully");
     } catch (error: any) {
-      console.error(error);
-      alert(`❌ ${error.message}`);
-    } finally {
-      setLoading(false);
+      alert(error.message);
     }
   };
 
-  const handleBackFromDetail = () => {
-    setSelectedClass(null);
-  };
-
+  /* ===================== DETAIL VIEW ===================== */
   if (selectedClass) {
     return (
-      <div className="w-full px-4">
+      <div className="w-full max-w-3xl mx-auto px-4">
         <button
-          onClick={handleBackFromDetail}
-          className="flex items-center gap-2 text-sm text-gray-600 mb-4"
+          onClick={() => setSelectedClass(null)}
+          className="flex items-center gap-2 text-sm text-gray-600 mb-6 hover:text-black"
         >
           <ChevronLeft size={16} /> Back to Classes
         </button>
 
-        <h2 className="text-lg font-semibold mb-4">Class Details</h2>
-
-        {detailLoading ? (
-          <div className="text-gray-500">Loading class details...</div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow p-6 w-full max-w-md space-y-3">
-            <div>
-              <span className="font-medium text-gray-700">Class Name: </span>
-              {selectedClass.class_name}
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">Status: </span>
-              {selectedClass.status}
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">Created At: </span>
-              {new Date(selectedClass.createdAt).toLocaleString()}
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">Updated At: </span>
-              {new Date(selectedClass.updatedAt).toLocaleString()}
-            </div>
+        <div className="bg-white rounded-2xl border shadow-sm">
+          <div className="px-6 py-4 border-b">
+            <h2 className="text-lg font-semibold">Class Details</h2>
           </div>
-        )}
+
+          {detailLoading ? (
+            <div className="p-6 text-gray-500">Loading details...</div>
+          ) : (
+            <div className="divide-y">
+              {[
+                ["Class Name", selectedClass.class_name],
+                [
+                  "Status",
+                  <span
+                    key="status"
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      selectedClass.status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {selectedClass.status}
+                  </span>,
+                ],
+                [
+                  "Created At",
+                  new Date(selectedClass.createdAt).toLocaleString(),
+                ],
+                [
+                  "Updated At",
+                  new Date(selectedClass.updatedAt).toLocaleString(),
+                ],
+              ].map(([label, value], i) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-3 gap-4 px-6 py-4 text-sm"
+                >
+                  <div className="text-gray-500 font-medium">{label}</div>
+                  <div className="col-span-2 text-gray-900">{value}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
+  /* ===================== LIST VIEW ===================== */
   return (
-    <div className="w-full px-4">
+    <div className="w-full max-w-5xl mx-auto px-4">
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-sm text-gray-600 mb-4"
+        className="flex items-center gap-2 text-sm text-gray-600 mb-6 hover:text-black"
       >
         <ChevronLeft size={16} /> Back
       </button>
 
-      <h2 className="text-lg font-semibold mb-4">All Classes</h2>
+      <div className="bg-white rounded-2xl border shadow-sm">
+        <div className="px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">All Classes</h2>
+        </div>
 
-      {loading ? (
-        <div className="text-gray-500">Loading classes...</div>
-      ) : (
-        <div className="space-y-3">
-          {classes.length > 0 ? (
-            classes.map((c) => (
+        {loading ? (
+          <div className="p-6 text-gray-500">Loading classes...</div>
+        ) : classes.length === 0 ? (
+          <div className="p-6 text-gray-500">No classes found</div>
+        ) : (
+          <div className="divide-y">
+            {/* HEADER */}
+            <div className="grid grid-cols-5 px-6 py-3 text-xs font-semibold text-gray-500 bg-gray-50">
+              <div className="col-span-2">CLASS NAME</div>
+              <div>STATUS</div>
+              <div>UPDATED</div>
+              <div className="text-right">ACTIONS</div>
+            </div>
+
+            {/* ROWS */}
+            {classes.map((c) => (
               <div
                 key={c.id}
-                className="flex justify-between items-center w-full bg-white rounded-2xl shadow p-4 border border-gray-200 cursor-pointer hover:bg-gray-50 transition"
                 onClick={() => fetchClassDetails(c.id)}
+                className="grid grid-cols-5 px-6 py-4 items-center text-sm hover:bg-gray-50 cursor-pointer"
               >
-                <span className="text-gray-700 font-medium">{c.class_name}</span>
+                <div className="col-span-2 font-medium text-gray-900">
+                  {c.class_name}
+                </div>
 
-                <div className="flex gap-3">
+                <div>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      c.status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {c.status}
+                  </span>
+                </div>
+
+                <div className="text-gray-600">
+                  {new Date(c.updatedAt).toLocaleDateString()}
+                </div>
+
+                <div className="flex justify-end gap-4">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onEditClass(c);
                     }}
                     className="text-blue-500 hover:text-blue-700"
+                    title="Edit"
                   >
                     <Edit2 size={18} />
                   </button>
@@ -156,20 +202,19 @@ export default function ViewClasses({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete(c.id); // call API
+                      handleDelete(c.id);
                     }}
                     className="text-red-500 hover:text-red-700"
+                    title="Delete"
                   >
                     <Trash2 size={18} />
                   </button>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="text-gray-500">No classes found</div>
-          )}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

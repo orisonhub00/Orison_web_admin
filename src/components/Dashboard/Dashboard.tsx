@@ -27,8 +27,10 @@ import ViewClasses from "../classes/viewclasses";
 import ViewSections from "../sections/viewsections";
 import CreateSection from "../sections/addsection";
 
+
 export default function Dashboard() {
   const [activeContent, setActiveContent] = useState<ContentType>("dashboard");
+  
  const [editingClass, setEditingClass] = useState<{
   id: string;
   class_name: string;
