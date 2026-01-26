@@ -5,6 +5,7 @@ const BASE_URL = "https://orison-server.vercel.app";
 export async function adminLogin(email: string, password: string) {
   console.log("📡 Calling Login API...");
   console.log("➡️ Request payload:", { email, password });
+  console.log("Token",{getAuthToken})
 
   const res = await fetch(`${BASE_URL}/api/v1/auth/login`, {
     method: "POST",
@@ -85,6 +86,7 @@ export async function getClassById(id: string) {
   if (!token) throw new Error("No admin token found. Please login again.");
 
   console.log("📡 Calling Get Class By ID API...", id);
+  console.log("Token",{getAuthToken})
 
   const res = await fetch(`${BASE_URL}/api/v1/classes/${id}`, {
     method: "GET",

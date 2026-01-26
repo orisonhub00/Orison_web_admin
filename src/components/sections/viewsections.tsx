@@ -17,8 +17,6 @@ interface SectionType {
   deletedAt: string | null;
 }
 
-interface SectionDetailType extends SectionType {}
-
 export default function ViewSections({
   onBack,
   onEditSection,
@@ -29,24 +27,23 @@ export default function ViewSections({
   const [sections, setSections] = useState<SectionType[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSection, setSelectedSection] =
-    useState<SectionDetailType | null>(null);
+    useState<SectionType | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  // Fetch sections
+  /* ---------- FETCH SECTIONS ---------- */
   useEffect(() => {
     const fetchSections = async () => {
       setLoading(true);
       try {
-        const sectionList = await getSections();
+        const data = await getSections();
         setSections(
-          sectionList.map((sec: SectionType) => ({
-            ...sec,
-            status: sec.status || "active", // ensure status is always set
+          data.map((s: SectionType) => ({
+            ...s,
+            status: s.status || "active",
           }))
         );
-      } catch (error: any) {
-        console.error(error);
-        alert(`❌ Error fetching sections: ${error.message}`);
+      } catch (err: any) {
+        alert(err.message);
       } finally {
         setLoading(false);
       }
@@ -54,121 +51,159 @@ export default function ViewSections({
     fetchSections();
   }, []);
 
+  /* ---------- DETAILS ---------- */
   const fetchSectionDetails = async (id: string) => {
     setDetailLoading(true);
     try {
       const sec = await getSectionById(id);
       setSelectedSection({ ...sec, status: sec.status || "active" });
-    } catch (error: any) {
-      console.error(error);
-      alert(`❌ ${error.message}`);
+    } catch (err: any) {
+      alert(err.message);
     } finally {
       setDetailLoading(false);
     }
   };
 
+  /* ---------- DELETE ---------- */
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this section?")) return;
     try {
-      setLoading(true);
       await deleteSection(id);
       setSections((prev) => prev.filter((s) => s.id !== id));
-      alert("✅ Section deleted successfully");
-    } catch (error: any) {
-      console.error(error);
-      alert(`❌ ${error.message}`);
-    } finally {
-      setLoading(false);
+      alert("Section deleted successfully");
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
-  const handleBackFromDetail = () => setSelectedSection(null);
-
-  // ------------------- DETAIL VIEW -------------------
+  /* ================= DETAIL VIEW ================= */
   if (selectedSection) {
     return (
-      <div className="w-full px-4">
+      <div className="w-full max-w-3xl mx-auto px-4">
         <button
-          onClick={handleBackFromDetail}
-          className="flex items-center gap-2 text-sm text-gray-600 mb-4"
+          onClick={() => setSelectedSection(null)}
+          className="flex items-center gap-2 text-sm text-gray-600 mb-6 hover:text-black"
         >
           <ChevronLeft size={16} /> Back to Sections
         </button>
 
-        <h2 className="text-lg font-semibold mb-4">Section Details</h2>
-
-        {detailLoading ? (
-          <div className="text-gray-500">Loading section details...</div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow p-6 w-full max-w-md space-y-3">
-            <div>
-              <span className="font-medium text-gray-700">Section Name: </span>
-              {selectedSection.section_name}
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">Status: </span>
-              {selectedSection.status === "active" ? "Active" : "Inactive"}
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">Created At: </span>
-              {new Date(selectedSection.createdAt).toLocaleString()}
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">Updated At: </span>
-              {new Date(selectedSection.updatedAt).toLocaleString()}
-            </div>
+        <div className="bg-white rounded-2xl border shadow-sm">
+          <div className="px-6 py-4 border-b">
+            <h2 className="text-lg font-semibold">Section Details</h2>
           </div>
-        )}
+
+          {detailLoading ? (
+            <div className="p-6 text-gray-500">Loading details...</div>
+          ) : (
+            <div className="divide-y">
+              {[
+                ["Section Name", selectedSection.section_name],
+                [
+                  "Status",
+                  <span
+                    key="status"
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      selectedSection.status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {selectedSection.status}
+                  </span>,
+                ],
+                [
+                  "Created At",
+                  new Date(selectedSection.createdAt).toLocaleString(),
+                ],
+                [
+                  "Updated At",
+                  new Date(selectedSection.updatedAt).toLocaleString(),
+                ],
+              ].map(([label, value], i) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-3 gap-4 px-6 py-4 text-sm"
+                >
+                  <div className="text-gray-500 font-medium">{label}</div>
+                  <div className="col-span-2 text-gray-900">{value}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
-  // ------------------- LIST VIEW -------------------
+  /* ================= LIST VIEW ================= */
   return (
-    <div className="w-full px-4">
+    <div className="w-full max-w-5xl mx-auto px-4">
       <button
         onClick={onBack}
-        className="flex items-center gap-2 text-sm text-gray-600 mb-4"
+        className="flex items-center gap-2 text-sm text-gray-600 mb-6 hover:text-black"
       >
         <ChevronLeft size={16} /> Back
       </button>
 
-      <h2 className="text-lg font-semibold mb-4">All Sections</h2>
+      <div className="bg-white rounded-2xl border shadow-sm">
+        <div className="px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold">All Sections</h2>
+        </div>
 
-      {loading ? (
-        <div className="text-gray-500">Loading sections...</div>
-      ) : (
-        <div className="space-y-3">
-          {sections.length > 0 ? (
-            sections.map((s) => (
+        {loading ? (
+          <div className="p-6 text-gray-500">Loading sections...</div>
+        ) : sections.length === 0 ? (
+          <div className="p-6 text-gray-500">No sections found</div>
+        ) : (
+          <div className="divide-y">
+            {/* TABLE HEADER */}
+            <div className="grid grid-cols-6 px-6 py-3 text-xs font-semibold text-gray-500 bg-gray-50">
+              <div className="col-span-2">SECTION NAME</div>
+              <div>STATUS</div>
+              <div>CREATED</div>
+              <div>UPDATED</div>
+              <div className="text-right">ACTIONS</div>
+            </div>
+
+            {/* TABLE ROWS */}
+            {sections.map((s) => (
               <div
                 key={s.id}
-                className="flex justify-between items-center w-full bg-white rounded-2xl shadow p-4 border border-gray-200 cursor-pointer hover:bg-gray-50 transition"
                 onClick={() => fetchSectionDetails(s.id)}
+                className="grid grid-cols-6 px-6 py-4 text-sm items-center hover:bg-gray-50 cursor-pointer"
               >
-                <span className="text-gray-700 font-medium">
-                  {s.section_name}{" "}
+                <div className="col-span-2 font-medium text-gray-900">
+                  {s.section_name}
+                </div>
+
+                <div>
                   <span
-                    className={`ml-2 px-2 py-0.5 text-xs rounded-full font-medium ${
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       s.status === "active"
                         ? "bg-green-100 text-green-700"
                         : "bg-gray-200 text-gray-700"
                     }`}
                   >
-                    {s.status === "active" ? "Active" : "Inactive"}
+                    {s.status}
                   </span>
-                </span>
+                </div>
 
-                <div className="flex gap-3">
+                <div className="text-gray-600">
+                  {new Date(s.createdAt).toLocaleDateString()}
+                </div>
+
+                <div className="text-gray-600">
+                  {new Date(s.updatedAt).toLocaleDateString()}
+                </div>
+
+                <div className="flex justify-end gap-4">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onEditSection({
-                        ...s,
-                        status: s.status || "active", // ensure status is passed
-                      });
+                      onEditSection(s);
                     }}
                     className="text-blue-500 hover:text-blue-700"
+                    title="Edit"
                   >
                     <Edit2 size={18} />
                   </button>
@@ -179,17 +214,16 @@ export default function ViewSections({
                       handleDelete(s.id);
                     }}
                     className="text-red-500 hover:text-red-700"
+                    title="Delete"
                   >
                     <Trash2 size={18} />
                   </button>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="text-gray-500">No sections found</div>
-          )}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

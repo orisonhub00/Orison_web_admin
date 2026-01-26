@@ -29,8 +29,10 @@ import CreateSection from "../sections/addsection";
 import CreateAcademicYear from "../academicyears/CreateAcademicYear";
 import ViewAcademicYears from "../academicyears/ViewAcademicYears";
 
+
 export default function Dashboard() {
   const [activeContent, setActiveContent] = useState<ContentType>("dashboard");
+  
  const [editingClass, setEditingClass] = useState<{
   id: string;
   class_name: string;
