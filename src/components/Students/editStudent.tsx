@@ -26,13 +26,15 @@ type StudentForm = {
   emergency_contact: string;
 };
 
-export default function EditStudent({ onBack }: { onBack?: () => void }) {
-  const { id } = useParams<{ id: string }>(); // ✅ student id from route
-
+export default function EditStudent({
+  id,
+  onBack,
+}: {
+  id: string;
+  onBack?: () => void;
+}) {
   const [form, setForm] = useState<StudentForm | null>(null);
   const [loading, setLoading] = useState(true);
-
-  /* ================= FETCH STUDENT ================= */
 
   useEffect(() => {
     const fetchStudent = async () => {
@@ -41,16 +43,10 @@ export default function EditStudent({ onBack }: { onBack?: () => void }) {
           Authorization: `Bearer ${getAdminToken()}`,
         },
       });
-
       const data = await res.json();
-
-      if (data.success) {
-        setForm(data.student);
-      }
-
+      if (data.success) setForm(data.student);
       setLoading(false);
     };
-
     fetchStudent();
   }, [id]);
 

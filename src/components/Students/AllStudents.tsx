@@ -2,54 +2,90 @@
 
 import React, { useEffect, useState } from "react";
 import { Search, Eye, Pencil, Plus } from "lucide-react";
-import { BASE_URL } from "@/lib/authClient";
+import { BASE_URL, getClasses, getSectionsByClass } from "@/lib/authClient";
 import { getAdminToken } from "@/lib/getToken";
 import { useRouter } from "next/navigation";
 
 /* ================= TYPES ================= */
 
-interface AllStudentsProps {
-  onViewStudent: (id: string) => void;
-  onEditStudent: (id: string) => void;
+type ClassType = {
+  id: string;
+  class_name: string;
+};
+
+type AllStudentsProps = {
+  onViewStudent: (studentId: string) => void;
+  onEditStudent: (studentId: string) => void;
   onAddStudent: () => void;
-}
+};
+
+type SectionType = {
+  id: string;
+  section_name: string;
+};
 
 type Student = {
   id: string;
   name: string;
   admission_no: string;
-
-  class: {
-    id: string;
-    class_name: string;
-  } | null;
-
-  section: {
-    id: string;
-    section_name: string;
-  } | null;
+  class: { id: string; class_name: string } | null;
+  section: { id: string; section_name: string } | null;
 };
-
 
 export default function AllStudents({
   onViewStudent,
   onEditStudent,
   onAddStudent,
 }: AllStudentsProps) {
-  /* ================= STATE ================= */
-  
   const router = useRouter();
+
+  /* ================= STATE ================= */
+
+  const [classes, setClasses] = useState<ClassType[]>([]);
+  const [sections, setSections] = useState<SectionType[]>([]);
+
+  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedSection, setSelectedSection] = useState("");
+
   const [students, setStudents] = useState<Student[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false); // ⭐ important
+
   const limit = 10;
 
-  /* ================= FETCH ================= */
+  /* ================= INIT ================= */
+
+  useEffect(() => {
+    getClasses().then(setClasses);
+  }, []);
+
+  /* ================= FETCH SECTIONS ================= */
+
+  useEffect(() => {
+    if (!selectedClass) {
+      setSections([]);
+      setSelectedSection("");
+      return;
+    }
+
+    getSectionsByClass(selectedClass)
+      .then((res) => setSections(res.sections || []))
+      .catch(() => setSections([]));
+  }, [selectedClass]);
+
+  /* ================= FETCH STUDENTS ================= */
 
   const fetchStudents = async () => {
+    if (!selectedClass || !selectedSection) return;
+
+    setLoading(true);
+    setSearched(true);
+
     const res = await fetch(
-      `${BASE_URL}/api/v1/students?page=${page}&limit=${limit}&search=${search}`,
+      `${BASE_URL}/api/v1/students?class_id=${selectedClass}&section_id=${selectedSection}&page=${page}&limit=${limit}&search=${search}`,
       {
         headers: {
           Authorization: `Bearer ${getAdminToken()}`,
@@ -60,13 +96,22 @@ export default function AllStudents({
     const data = await res.json();
 
     if (data.success) {
-      setStudents(data.students);
-      setTotal(data.total);
+      setStudents(data.students || []);
+      setTotal(data.total || 0);
+    } else {
+      setStudents([]);
+      setTotal(0);
     }
+
+    setLoading(false);
   };
 
+  /* ================= REFETCH ON PAGE / SEARCH ================= */
+
   useEffect(() => {
-    fetchStudents();
+    if (searched) {
+      fetchStudents();
+    }
   }, [page, search]);
 
   /* ================= UI ================= */
@@ -74,39 +119,83 @@ export default function AllStudents({
   return (
     <div className="w-full min-h-screen bg-[#f5f6fa] p-6">
       {/* Header */}
-      <div className="flex items-center justify-between bg-white rounded-xl px-6 py-4 shadow-sm border">
+      <div className="flex items-center justify-between bg-white rounded-xl px-6 py-4 border">
         <h2 className="text-[15px] font-semibold text-[#ff6b35]">
           Students
         </h2>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <input
-              placeholder="Search"
-              value={search}
-              onChange={(e) => {
-                setPage(1);
-                setSearch(e.target.value);
-              }}
-              className="pl-9 pr-3 py-2 rounded-lg border text-[12px]"
-            />
-          </div>
+        <button
+          onClick={onAddStudent}
+          className="flex items-center gap-2 px-4 py-2 text-[12px] rounded-lg bg-[#ff6b35] text-white"
+        >
+          <Plus size={14} />
+          Add New Student
+        </button>
+      </div>
 
-          <button
-            onClick={onAddStudent}
-            className="flex items-center gap-2 px-4 py-2 text-[12px] rounded-lg bg-[#ff6b35] text-white"
-          >
-            <Plus size={14} />
-            Add New Student
-          </button>
+      {/* ================= FILTERS ================= */}
+      <div className="mt-4 bg-white rounded-xl p-4 border grid grid-cols-1 md:grid-cols-4 gap-3">
+        <select
+          value={selectedClass}
+          onChange={(e) => {
+            setSelectedClass(e.target.value);
+            setPage(1);
+            setStudents([]);
+            setSearched(false);
+          }}
+          className="border rounded-lg px-3 py-2 text-[12px]"
+        >
+          <option value="">Select Class</option>
+          {classes.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.class_name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={selectedSection}
+          onChange={(e) => {
+            setSelectedSection(e.target.value);
+            setPage(1);
+          }}
+          disabled={!sections.length}
+          className="border rounded-lg px-3 py-2 text-[12px]"
+        >
+          <option value="">Select Section</option>
+          {sections.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.section_name}
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={fetchStudents}
+          disabled={!selectedClass || !selectedSection}
+          className="bg-[#ff6b35] text-white rounded-lg text-[12px]"
+        >
+          Search Students
+        </button>
+
+        <div className="relative">
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+          <input
+            placeholder="Search"
+            value={search}
+            onChange={(e) => {
+              setPage(1);
+              setSearch(e.target.value);
+            }}
+            className="pl-8 pr-3 py-2 rounded-lg border text-[12px] w-full"
+          />
         </div>
       </div>
 
-      {/* Table */}
+      {/* ================= TABLE ================= */}
       <div className="mt-4 bg-white rounded-xl border overflow-hidden">
         <table className="w-full text-[12px]">
           <thead className="bg-gray-50 border-b">
@@ -133,64 +222,34 @@ export default function AllStudents({
                 <td className="px-4 py-3">
                   {student.section?.section_name || "-"}
                 </td>
+                <td className="px-4 py-3">
+  <button
+    onClick={() => {
+      onEditStudent(student.id); // pass the student ID
+    }}
+  >
+    <Pencil size={14} />
+  </button>
+</td>
 
                 <td className="px-4 py-3">
-                  <button
-                    onClick={() => router.push(`/students/edit/${student.id}`)}
-                    className="text-gray-500 hover:text-[#ff6b35]"
-                  >
-                    <Pencil size={14} />
-                  </button>
-
-                </td>
-
-                <td className="px-4 py-3">
-                  <button
-                    onClick={() => onViewStudent(student.id)}
-                    className="text-gray-500 hover:text-[#ff6b35]"
-                  >
+                  <button onClick={() => onViewStudent(student.id)}>
                     <Eye size={14} />
                   </button>
                 </td>
               </tr>
             ))}
 
-            {!students.length && (
+            {/* ✅ EMPTY STATE */}
+            {!loading && searched && students.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center py-6 text-gray-400">
-                  No students found
+                <td colSpan={6} className="text-center py-8 text-gray-400">
+                  No students found for this class & section
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t text-[11px]">
-          <span>
-            Showing {students.length} of {total}
-          </span>
-
-          <div className="flex items-center gap-2">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage(page - 1)}
-              className="px-3 py-1 border rounded disabled:opacity-50"
-            >
-              Previous
-            </button>
-
-            <span>Page {page}</span>
-
-            <button
-              disabled={page * limit >= total}
-              onClick={() => setPage(page + 1)}
-              className="px-3 py-1 bg-[#ff6b35] text-white rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
