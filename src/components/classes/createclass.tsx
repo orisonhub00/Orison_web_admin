@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
-import { createClass, updateClass } from "@/lib/auth";
+import { createClass, updateClass } from "@/lib/authClient";
 
 export default function CreateClass({
   onBack,
@@ -39,7 +39,11 @@ export default function CreateClass({
     try {
       if (isEditMode && editingClass) {
         // ✅ Only send status on update
-        await updateClass(editingClass.id, className, isActive ? "active" : "inactive");
+        await updateClass(
+          editingClass.id,
+          className,
+          isActive ? "active" : "inactive"
+        );
         alert("✅ Class updated successfully!");
       } else {
         // ✅ Create class WITHOUT status
@@ -71,9 +75,7 @@ export default function CreateClass({
       </h2>
 
       <div className="bg-white rounded-2xl shadow p-5 max-w-md">
-        <label className="block text-sm font-medium mb-1">
-          Class Name
-        </label>
+        <label className="block text-sm font-medium mb-1">Class Name</label>
 
         <input
           type="text"

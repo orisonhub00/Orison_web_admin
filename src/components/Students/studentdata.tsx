@@ -2,205 +2,285 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Download, Upload as UploadIcon } from "lucide-react";
-import { getClasses, getSections } from "@/lib/auth";
+import { getClasses, getSectionsByClass, BASE_URL } from "@/lib/authClient";
+import { getAdminToken } from "@/lib/getToken";
 
-type FileStatus = {
-  name: string;
-  class: string;
-  year: number;
-  section: string;
-  status: "pending" | "completed";
+/* ================= TYPES ================= */
+
+type ClassType = {
+  id: string;
+  class_name: string;
 };
+
+type SectionType = {
+  id: string;
+  section_name: string;
+};
+
+type Batch = {
+  id: string;
+  academic_year_id: string;
+  class_id: string;
+  section_id: string | null;
+  status: "pending" | "processing" | "failed" | "completed";
+  createdAt: string;
+};
+
+/* ================= COMPONENT ================= */
 
 export default function StudentDataScreen({ onBack }: { onBack: () => void }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [classes, setClasses] = useState<string[]>([]);
-  const [sections, setSections] = useState<string[]>([]);
+  const [classes, setClasses] = useState<ClassType[]>([]);
+  const [sections, setSections] = useState<SectionType[]>([]);
   const [academicYears, setAcademicYears] = useState<number[]>([]);
 
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
   const [selectedYear, setSelectedYear] = useState<number | "">("");
 
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [activeBatch, setActiveBatch] = useState<Batch | null>(null);
+
   const [files, setFiles] = useState<File[]>([]);
-  const [recentFiles, setRecentFiles] = useState<FileStatus[]>([]);
-  const [activeUploadFile, setActiveUploadFile] =
-    useState<FileStatus | null>(null);
-
   const [toast, setToast] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  /* ---------- INIT ---------- */
-  useEffect(() => {
-    const fetchData = async () => {
-      const classData = await getClasses();
-      const sectionData = await getSections();
 
-      setClasses(classData.map((c: any) => c.class_name));
-      setSections(sectionData.map((s: any) => s.section_name));
-    };
+  /* ================= HELPERS ================= */
 
-    fetchData();
-
-    const years: number[] = [];
-    for (let y = 1999; y <= 2045; y++) years.push(y);
-    setAcademicYears(years);
-  }, []);
-
-  /* ---------- HELPERS ---------- */
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
 
-  const fileName =
-    selectedClass && selectedYear && selectedSection
-      ? `StudentList_${selectedClass}_${selectedSection}_${selectedYear}.xlsx`
-      : "";
-
-  /* ---------- DOWNLOAD ---------- */
-  const handleDownload = async () => {
-    if (!selectedClass || !selectedYear || !selectedSection) {
-      showToast("⚠️ Select Class, Year & Section");
-      return;
-    }
-
-    const alreadyPending = recentFiles.find(
-      (f) => f.name === fileName && f.status === "pending"
-    );
-
-    if (alreadyPending) {
-      showToast("⚠️ File already downloaded. Upload it first.");
-      return;
-    }
-
-    const params = new URLSearchParams({
-      class: selectedClass,
-      section: selectedSection,
-      academicYear: selectedYear.toString(),
+  const reloadBatches = async () => {
+    const res = await fetch(`${BASE_URL}/api/v1/studentbatches`, {
+      headers: { Authorization: `Bearer ${getAdminToken()}` },
     });
-
-    const res = await fetch(`?${params.toString()}`);
-    const blob = await res.blob();
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.click();
-
-    setRecentFiles((prev) => [
-      ...prev,
-      {
-        name: fileName,
-        class: selectedClass,
-        year: selectedYear as number,
-        section: selectedSection,
-        status: "pending",
-      },
-    ]);
-
-    setSelectedClass("");
-    setSelectedSection("");
-    setSelectedYear("");
-    setFiles([]);
-    setActiveUploadFile(null);
-
-    showToast("✅ File downloaded (Pending)");
+    const data = await res.json();
+    setBatches(data.batches || []);
   };
 
-  /* ---------- FILE PICK ---------- */
+  /* ================= INIT ================= */
+
+  useEffect(() => {
+    getClasses().then(setClasses);
+
+    const years: number[] = [];
+    for (let y = 1999; y <= 2045; y++) years.push(y);
+    setAcademicYears(years);
+
+    reloadBatches();
+  }, []);
+
+  /* ================= FETCH SECTIONS ================= */
+
+  useEffect(() => {
+    if (!selectedClass) {
+      setSections([]);
+      setSelectedSection("");
+      return;
+    }
+
+    getSectionsByClass(selectedClass)
+      .then((res) => setSections(res.sections || []))
+      .catch(() => setSections([]));
+  }, [selectedClass]);
+
+  /* ================= DOWNLOAD TEMPLATE ================= */
+
+  const handleDownload = async () => {
+    if (!selectedYear || !selectedClass) {
+      showToast("⚠️ Select Academic Year & Class");
+      return;
+    }
+
+    // 1️⃣ Create batch
+    const res = await fetch(`${BASE_URL}/api/v1/studentbatches/create-template`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getAdminToken()}`,
+      },
+      body: JSON.stringify({
+        academic_year_id: selectedYear,
+        class_id: selectedClass,
+        section_id: selectedSection || null,
+      }),
+    });
+
+    const data = await res.json();
+    const batch = data.batch;
+
+    // 2️⃣ Download Excel
+    const fileRes = await fetch(
+      `${BASE_URL}/api/v1/studentbatches/${batch.id}/template`,
+      { headers: { Authorization: `Bearer ${getAdminToken()}` } }
+    );
+
+    const blob = await fileRes.blob();
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `students_${batch.id}.xlsx`;
+    a.click();
+
+    reloadBatches();
+    showToast("✅ Template downloaded");
+  };
+
+  /* ================= FILE PICK ================= */
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) setFiles([e.target.files[0]]);
   };
 
-  /* ---------- UPLOAD CLICK ---------- */
-  const handleUploadClick = () => {
-    if (!activeUploadFile) {
-      showToast("⚠️ Select a pending file from table");
+  /* ================= UPLOAD ================= */
+
+const handleUpload = async () => {
+  if (!activeBatch) {
+    showToast("⚠️ Select a batch first");
+    return;
+  }
+
+  if (uploading) {
+    showToast("⚠️ Upload in progress");
+    return;
+  }
+
+  if (!files.length) {
+    showToast("⚠️ Select the Excel file");
+    return;
+  }
+
+  setUploading(true);
+
+  try {
+    const formData = new FormData();
+    formData.append("file", files[0]);
+
+    const res = await fetch(
+      `${BASE_URL}/api/v1/studentbatches/${activeBatch.id}/upload`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+        body: formData,
+      }
+    );
+
+    /* ===== VALIDATION ERROR ===== */
+    if (res.status === 422) {
+      const data = await res.json();
+
+      if (confirm("Errors found. Download error report PDF?")) {
+        const binary = atob(data.error_pdf_base64);
+        const bytes = new Uint8Array(binary.length);
+
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+
+        const blob = new Blob([bytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        window.open(url);
+      }
+
       return;
     }
 
+    /* ===== SUCCESS ===== */
+    if (res.status === 201) {
+      showToast("🎉 Students uploaded successfully");
+      setActiveBatch(null);
+      setFiles([]);
+      reloadBatches();
+      window.location.href = "/students/view";
+    }
+  } catch (err) {
+    console.error(err);
+    showToast("❌ Upload failed. Please try again.");
+  } finally {
+    setUploading(false); // ✅ ALWAYS RESET
+  }
+};
+
+
+
+
+  const retryUpload = async (batchId: string) => {
     if (files.length === 0) {
-      fileInputRef.current?.click(); // manual picker
+      fileInputRef.current?.click();
       return;
     }
-
-    if (files[0].name !== activeUploadFile.name) {
-      showToast("⚠️ Upload the same downloaded Excel file");
-      return;
-    }
-
-    handleUpload();
-  };
-
-  /* ---------- UPLOAD ---------- */
-  const handleUpload = () => {
-    if (!activeUploadFile || files.length === 0) return;
 
     const formData = new FormData();
     formData.append("file", files[0]);
 
-    fetch("https://your-api.com/upload-student", {
-      method: "POST",
-      body: formData,
-    })
-      .then(() => {
-        setRecentFiles((prev) =>
-          prev.map((f) =>
-            f.name === activeUploadFile.name
-              ? { ...f, status: "completed" }
-              : f
-          )
-        );
-        setFiles([]);
-        setActiveUploadFile(null);
-        showToast("🎉 File uploaded successfully");
-      })
-      .catch(() => showToast("❌ Upload failed"));
+    const res = await fetch(
+      `${BASE_URL}/api/v1/studentbatches/${batchId}/retry-upload`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+        body: formData,
+      }
+    );
+
+    if (res.status === 201) {
+      showToast("✅ Retry successful");
+      setFiles([]);
+      reloadBatches();
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-[#f7ebe7] p-6">
-      {/* TOAST */}
-      {toast && (
-        <div className="fixed top-6 right-6 bg-black text-white px-4 py-2 rounded-lg">
-          {toast}
-        </div>
-      )}
+  const classMap = Object.fromEntries(
+  classes.map(c => [c.id, c.class_name])
+);
 
-      {/* HEADER */}
-      <div className="bg-white rounded-2xl border px-6 py-4 mb-6 flex items-center gap-4">
-        <button onClick={onBack} className="h-9 w-9 border rounded-full">
-          <ChevronLeft size={16} />
-        </button>
-        <div>
-          <h2 className="font-semibold">Students</h2>
-          <p className="text-[12px] text-gray-500">
-            Download & Upload Student Data
-          </p>
-        </div>
+const sectionMap = Object.fromEntries(
+  sections.map(s => [s.id, s.section_name])
+);
+
+console.log("Section Map:", sectionMap);
+console.log("Class Map:", classMap);
+
+
+  /* ================= UI ================= */
+
+return (
+  <div className="min-h-screen bg-[#f7ebe7] p-6">
+    {toast && (
+      <div className="fixed top-6 right-6 bg-black text-white px-4 py-2 rounded-lg z-50">
+        {toast}
       </div>
+    )}
 
-      {/* MAIN */}
-      <div className="bg-white rounded-2xl border p-6 space-y-6">
-        {/* FILTERS */}
-        <div className="grid md:grid-cols-3 gap-4">
-          <select
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="border rounded-full px-4 py-2"
-          >
-            <option value="">Select Class</option>
-            {classes.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
+    {/* HEADER */}
+    <div className="bg-white rounded-2xl border px-6 py-4 mb-6 flex items-center gap-4">
+      <button onClick={onBack} className="h-9 w-9 border rounded-full">
+        <ChevronLeft size={16} />
+      </button>
+      <div>
+        <h2 className="font-semibold text-lg">Students</h2>
+        <p className="text-xs text-gray-500">
+          Download & Upload Student Data
+        </p>
+      </div>
+    </div>
 
+    {/* MAIN CARD */}
+    <div className="bg-white rounded-2xl border p-6 space-y-10">
+
+      {/* ================= FILTERS ================= */}
+      <div>
+        <h3 className="font-semibold mb-3">Select Academic Details</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="border rounded-full px-4 py-2"
+            className="border rounded-full px-4 py-3"
           >
             <option value="">Academic Year</option>
             {academicYears.map((y) => (
@@ -209,119 +289,159 @@ export default function StudentDataScreen({ onBack }: { onBack: () => void }) {
           </select>
 
           <select
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+            className="border rounded-full px-4 py-3"
+          >
+            <option value="">Select Class</option>
+            {classes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.class_name}
+              </option>
+            ))}
+          </select>
+
+          <select
             value={selectedSection}
             onChange={(e) => setSelectedSection(e.target.value)}
-            className="border rounded-full px-4 py-2"
+            disabled={!sections.length}
+            className="border rounded-full px-4 py-3"
           >
             <option value="">Section</option>
             {sections.map((s) => (
-              <option key={s}>{s}</option>
+              <option key={s.id} value={s.id}>
+                {s.section_name}
+              </option>
             ))}
           </select>
-        </div>
 
-        {/* ACTIONS */}
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* DOWNLOAD */}
           <button
             onClick={handleDownload}
-            className="h-[56px] rounded-full bg-orange-500 hover:bg-orange-600 text-white font-semibold flex items-center justify-center gap-2"
+            className="rounded-full bg-orange-500 hover:bg-orange-600 text-white font-semibold flex items-center justify-center gap-2"
           >
             <Download size={18} /> Download Excel
           </button>
-
-          {/* UPLOAD */}
-          <div className="flex flex-col items-center">
-            <div
-              className={`h-[56px] w-full rounded-full border-2 border-dashed flex items-center justify-center gap-3 ${
-                activeUploadFile
-                  ? "border-blue-400 text-blue-600"
-                  : "border-gray-300 text-gray-400"
-              }`}
-            >
-              <UploadIcon size={18} />
-              {activeUploadFile
-                ? activeUploadFile.name
-                : "Select pending file below"}
-            </div>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-
-            <button
-              onClick={handleUploadClick}
-              disabled={!activeUploadFile}
-              className={`mt-4 h-[56px] w-full rounded-full font-semibold flex items-center justify-center gap-2 ${
-                activeUploadFile
-                  ? "bg-blue-600 hover:bg-blue-700 text-white"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              <UploadIcon size={18} />
-              {files.length === 0 ? "Select File & Upload" : "Upload"}
-            </button>
-          </div>
-        </div>
-
-        {/* RECENT TABLE */}
-        <div>
-          <h4 className="font-semibold mb-3">Recently Downloaded Files</h4>
-
-          <table className="w-full border text-[13px]">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="border p-2">#</th>
-                <th className="border p-2">Class</th>
-                <th className="border p-2">Year</th>
-                <th className="border p-2">Section</th>
-                <th className="border p-2">Status</th>
-                <th className="border p-2">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentFiles.map((f, i) => (
-                <tr
-                  key={i}
-                  className={`${
-                    activeUploadFile?.name === f.name
-                      ? "bg-blue-50"
-                      : "hover:bg-gray-50"
-                  }`}
-                >
-                  <td className="border p-2">{i + 1}</td>
-                  <td className="border p-2">{f.class}</td>
-                  <td className="border p-2">{f.year}</td>
-                  <td className="border p-2">{f.section}</td>
-                  <td className="border p-2 text-center">
-                    {f.status === "pending" ? "⏳ Pending" : "✅ Completed"}
-                  </td>
-                  <td className="border p-2 text-center">
-                    {f.status === "pending" ? (
-                      <button
-                        onClick={() => {
-                          setActiveUploadFile(f);
-                          setSelectedClass(f.class);
-                          setSelectedYear(f.year);
-                          setSelectedSection(f.section);
-                        }}
-                        className="text-blue-600 font-medium"
-                      >
-                        Upload
-                      </button>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
+
+      {/* ================= UPLOAD CARD ================= */}
+      <div className="border rounded-2xl p-6 bg-[#fafafa]">
+        <h3 className="font-semibold mb-4">Upload Filled Excel</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+
+          {/* Batch Info */}
+          <div className="border rounded-xl px-4 py-3 bg-white">
+            {activeBatch ? (
+              <>
+                <p className="text-xs text-gray-500">Selected Batch</p>
+                <p className="font-medium text-sm">
+                  Year {activeBatch.academic_year_id}
+                </p>
+              </>
+            ) : (
+              <p className="text-gray-400 text-sm">
+                Select a batch from below
+              </p>
+            )}
+          </div>
+
+          {/* File Picker */}
+        <label
+          className={`border-2 border-dashed rounded-xl px-4 py-3 text-center
+          ${!activeBatch ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-gray-50"}
+          `}
+        >
+          <UploadIcon className="inline mr-2" size={16} />
+          {files[0]?.name ?? (
+            activeBatch
+              ? "Choose Excel for selected batch"
+              : "Select a batch first")}
+          <input
+            ref={fileInputRef}
+            type="file"
+            disabled={!activeBatch}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </label>
+
+
+          {/* Upload Button */}
+          <button
+            onClick={handleUpload}
+            disabled={!activeBatch || !files.length}
+            className="h-[52px] rounded-full bg-blue-600 text-white font-semibold disabled:opacity-40"
+          >
+            Upload
+          </button>
+        </div>
+      </div>
+
+      {/* ================= BATCH TABLE ================= */}
+      <div>
+        <h3 className="font-semibold mb-3">Upload History</h3>
+
+        <table className="w-full border rounded-xl overflow-hidden text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="p-3 text-left">Class</th>
+              <th className="p-3 text-center">Year</th>
+              <th className="p-3 text-center">Section</th>
+              <th className="p-3 text-center">Status</th>
+              <th className="p-3 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {batches.map((batch) => (
+              <tr key={batch.id} className="border-t">
+                <td className="p-3">
+                  {classMap[batch.class_id] || "-"}
+                </td>
+
+                <td className="p-3 text-center">{batch.academic_year_id}</td>
+                <td className="p-3 text-center">{batch.section_id ? sectionMap[batch.section_id] || "-" : "-"}</td>
+                <td className="p-3 text-center">
+                  {batch.status === "pending" && "⏳ Pending"}
+                  {batch.status === "processing" && "⚙️ Processing"}
+                  {batch.status === "failed" && "❌ Failed"}
+                  {batch.status === "completed" && "✅ Completed"}
+                </td>
+                <td className="p-3 text-center">
+                  {batch.status === "pending" && (
+                    <button
+                      onClick={() => {
+                        setActiveBatch(batch);
+                        setFiles([]);
+                        setTimeout(() => fileInputRef.current?.click(), 0);
+                      }}
+                      className="text-blue-600 hover:underline"
+                    >
+                      Upload
+                    </button>
+                  )}
+                  {batch.status === "failed" && (
+                    <button
+                      onClick={() => {
+                        setActiveBatch(batch);
+                        showToast("Select corrected Excel file and click Upload");
+                        fileInputRef.current?.click();
+                      }}
+                      className="text-red-600 hover:underline"
+                    >
+                      Retry
+                    </button>
+
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
     </div>
-  );
+  </div>
+);
+
 }

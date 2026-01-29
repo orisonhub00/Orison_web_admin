@@ -1,5 +1,9 @@
-import Dashboard from "../../../src/components/Dashboard/Dashboard";
+"use client";
 
-export default function DashboardPage() {
-  return <Dashboard />;
+import Dashboard from "../../../src/components/Dashboard/Dashboard";
+import withAuth from "@/utils/withAuth";
+
+export default function DashboardPage(props: any) {
+  const ProtectedDashboard = withAuth(Dashboard);
+  return <ProtectedDashboard {...props} />;
 }

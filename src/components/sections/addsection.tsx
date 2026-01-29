@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
-import { createSection, updateSection } from "@/lib/auth";
+import { createSection, updateSection } from "@/lib/authClient";
 
 export default function CreateSection({
   onBack,
@@ -18,17 +18,15 @@ export default function CreateSection({
   const [isActive, setIsActive] = useState(true); // default active
 
   // Prefill values if editing
-useEffect(() => {
-  if (editingSection) {
-    setSectionName(editingSection.section_name || "");
-    setIsActive(editingSection.status?.toLowerCase() === "active");
-  } else {
-    setSectionName("");
-    setIsActive(true);
-  }
-}, [editingSection]);
-
-
+  useEffect(() => {
+    if (editingSection) {
+      setSectionName(editingSection.section_name || "");
+      setIsActive(editingSection.status?.toLowerCase() === "active");
+    } else {
+      setSectionName("");
+      setIsActive(true);
+    }
+  }, [editingSection]);
 
   const handleSave = async () => {
     if (sectionName.trim() === "") {

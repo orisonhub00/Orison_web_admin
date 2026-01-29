@@ -2,11 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, Edit2, Trash2 } from "lucide-react";
-import {
-  getSections,
-  getSectionById,
-  deleteSection,
-} from "@/lib/auth";
+import { getSections, getSectionById, deleteSection } from "@/lib/authClient";
 
 interface SectionType {
   id: string;
@@ -26,8 +22,9 @@ export default function ViewSections({
 }) {
   const [sections, setSections] = useState<SectionType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSection, setSelectedSection] =
-    useState<SectionType | null>(null);
+  const [selectedSection, setSelectedSection] = useState<SectionType | null>(
+    null
+  );
   const [detailLoading, setDetailLoading] = useState(false);
 
   /* ---------- FETCH SECTIONS ---------- */
