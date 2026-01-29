@@ -3,13 +3,12 @@ export type ContentType =
   | "add-student"
   | "view-students"
   | "view-student"
-  
   | "edit-student"
-    | "upload-student-data"
-     | "create-class"
+  | "upload-student-data"
+  | "create-class"
   | "view-classes"
-   | "create-section"
+  | "create-section"
   | "view-sections"
-  
-   | "create-academic-year"
-  | "view-academic-years";;
+  | "create-academic-year"
+  | "view-academic-years"
+  | "assign-class-sections";

@@ -6,7 +6,7 @@ import {
   getAcademicYears,
   getAcademicYearById,
   deleteAcademicYear,
-} from "@/lib/auth";
+} from "@/lib/authClient";
 
 interface AcademicYearType {
   id: string;
@@ -25,8 +25,9 @@ export default function ViewAcademicYears({
 }) {
   const [years, setYears] = useState<AcademicYearType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] =
-    useState<AcademicYearType | null>(null);
+  const [selectedYear, setSelectedYear] = useState<AcademicYearType | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchYears = async () => {
@@ -79,12 +80,10 @@ export default function ViewAcademicYears({
 
         <div className="bg-white rounded-2xl shadow p-6 max-w-md space-y-3">
           <div>
-            <span className="font-medium">Year:</span>{" "}
-            {selectedYear.year_name}
+            <span className="font-medium">Year:</span> {selectedYear.year_name}
           </div>
           <div>
-            <span className="font-medium">Status:</span>{" "}
-            {selectedYear.status}
+            <span className="font-medium">Status:</span> {selectedYear.status}
           </div>
           <div>
             <span className="font-medium">Created:</span>{" "}

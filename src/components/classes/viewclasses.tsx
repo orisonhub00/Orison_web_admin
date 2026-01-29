@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, Edit2, Trash2 } from "lucide-react";
-import { getClassById, getClasses, deleteClass } from "@/lib/auth";
+import { getClassById, getClasses, deleteClass } from "@/lib/authClient";
 
 interface ClassType {
   id: string;
@@ -22,8 +22,7 @@ export default function ViewClasses({
 }) {
   const [classes, setClasses] = useState<ClassType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedClass, setSelectedClass] =
-    useState<ClassType | null>(null);
+  const [selectedClass, setSelectedClass] = useState<ClassType | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
   /* ---------- FETCH CLASSES ---------- */

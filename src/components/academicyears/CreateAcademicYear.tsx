@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
-import { createAcademicYear, updateAcademicYear } from "@/lib/auth";
+import { createAcademicYear, updateAcademicYear } from "@/lib/authClient";
 
 export default function CreateAcademicYear({
   onBack,
@@ -71,9 +71,7 @@ export default function CreateAcademicYear({
       </h2>
 
       <div className="bg-white rounded-2xl shadow p-5 max-w-md">
-        <label className="block text-sm font-medium mb-1">
-          Academic Year
-        </label>
+        <label className="block text-sm font-medium mb-1">Academic Year</label>
 
         <input
           type="text"
