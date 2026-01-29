@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Download, Upload as UploadIcon } from "lucide-react";
-import { getClasses, getSectionsByClass, BASE_URL } from "@/lib/authClient";
+import { getClasses, getSectionsByClass, BASE_URL, getAcademicYears } from "@/lib/authClient";
 import { getAdminToken } from "@/lib/getToken";
 
 /* ================= TYPES ================= */
@@ -10,6 +10,12 @@ import { getAdminToken } from "@/lib/getToken";
 type ClassType = {
   id: string;
   class_name: string;
+};
+
+
+type AcademicYearType = {
+  id: string;
+  year_name: string;
 };
 
 type SectionType = {
@@ -33,11 +39,10 @@ export default function StudentDataScreen({ onBack }: { onBack: () => void }) {
 
   const [classes, setClasses] = useState<ClassType[]>([]);
   const [sections, setSections] = useState<SectionType[]>([]);
-  const [academicYears, setAcademicYears] = useState<number[]>([]);
-
+const [academicYears, setAcademicYears] = useState<AcademicYearType[]>([]);
+const [selectedYear, setSelectedYear] = useState<string>(""); // stores ID
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedSection, setSelectedSection] = useState("");
-  const [selectedYear, setSelectedYear] = useState<number | "">("");
 
   const [batches, setBatches] = useState<Batch[]>([]);
   const [activeBatch, setActiveBatch] = useState<Batch | null>(null);
@@ -62,17 +67,21 @@ export default function StudentDataScreen({ onBack }: { onBack: () => void }) {
     setBatches(data.batches || []);
   };
 
+  const academicYearMap = Object.fromEntries(
+  academicYears.map(y => [y.id, y.year_name])
+);
   /* ================= INIT ================= */
 
-  useEffect(() => {
-    getClasses().then(setClasses);
+ useEffect(() => {
+  getClasses().then(setClasses);
 
-    const years: number[] = [];
-    for (let y = 1999; y <= 2045; y++) years.push(y);
-    setAcademicYears(years);
+  getAcademicYears()
+    .then(setAcademicYears)
+    .catch(() => setAcademicYears([]));
 
-    reloadBatches();
-  }, []);
+  reloadBatches();
+}, []);
+
 
   /* ================= FETCH SECTIONS ================= */
 
@@ -278,15 +287,17 @@ return (
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="border rounded-full px-4 py-3"
-          >
-            <option value="">Academic Year</option>
-            {academicYears.map((y) => (
-              <option key={y}>{y}</option>
-            ))}
-          </select>
+  value={selectedYear}
+  onChange={(e) => setSelectedYear(e.target.value)}
+  className="border rounded-full px-4 py-3"
+>
+  <option value="">Academic Year</option>
+  {academicYears.map((y) => (
+    <option key={y.id} value={y.id}>
+      {y.year_name}
+    </option>
+  ))}
+</select>
 
           <select
             value={selectedClass}
@@ -336,7 +347,7 @@ return (
               <>
                 <p className="text-xs text-gray-500">Selected Batch</p>
                 <p className="font-medium text-sm">
-                  Year {activeBatch.academic_year_id}
+                  Year {academicYearMap[activeBatch.academic_year_id] || "-"}
                 </p>
               </>
             ) : (
@@ -399,7 +410,7 @@ return (
                   {classMap[batch.class_id] || "-"}
                 </td>
 
-                <td className="p-3 text-center">{batch.academic_year_id}</td>
+                <td className="p-3 text-center"> {academicYearMap[batch.academic_year_id] || "-"}</td>
                 <td className="p-3 text-center">{batch.section_id ? sectionMap[batch.section_id] || "-" : "-"}</td>
                 <td className="p-3 text-center">
                   {batch.status === "pending" && "⏳ Pending"}
