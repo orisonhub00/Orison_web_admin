@@ -32,6 +32,9 @@ import AssignClassSections from "../academics/classsections/AssignClassSections"
 export default function Dashboard() {
   const [activeContent, setActiveContent] = useState<ContentType>("dashboard");
 
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+
+
   const [editingClass, setEditingClass] = useState<{
     id: string;
     class_name: string;
@@ -162,21 +165,50 @@ export default function Dashboard() {
       case "view-students":
         return (
           <AllStudents
-            onViewStudent={() => setActiveContent("view-student")}
-            onEditStudent={() => setActiveContent("edit-student")}
-            onAddStudent={() => setActiveContent("add-student")}
-          />
+  onViewStudent={(studentId) => {
+    setActiveContent("view-student");
+    setEditingStudentId(studentId); // optional if you want to view
+  }}
+  onEditStudent={(studentId) => {
+    setEditingStudentId(studentId); // save student ID
+    setActiveContent("edit-student"); // open sidebar
+  }}
+  onAddStudent={() => setActiveContent("add-student")}
+/>
         );
+      
       case "view-student":
-        return <ViewStudent onBack={() => setActiveContent("view-students")} />;
+  if (!editingStudentId) return null;
+
+  return (
+    <ViewStudent
+      studentId={editingStudentId}
+      onBack={() => {
+        setEditingStudentId(null);
+        setActiveContent("view-students");
+      }}
+    />
+  );
+
 
       case "upload-student-data":
         return (
           <UploadStudentData onBack={() => setActiveContent("view-students")} />
         );
 
-      case "edit-student":
-        return <EditStudent onBack={() => setActiveContent("view-students")} />;
+      
+
+case "edit-student":
+  return (
+    <EditStudent
+      id={editingStudentId!} // pass the student id
+      onBack={() => {
+        setEditingStudentId(null);
+        setActiveContent("view-students");
+      }}
+    />
+  );
+
       case "dashboard":
       default:
         return (
