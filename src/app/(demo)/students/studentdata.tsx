@@ -5,6 +5,9 @@ import { ChevronLeft, Download, Upload as UploadIcon } from "lucide-react";
 import { getClasses, getSectionsByClass, BASE_URL, getAcademicYears } from "@/lib/authClient";
 import { getAdminToken } from "@/lib/getToken";
 
+import { useRouter } from "next/navigation";
+
+
 /* ================= TYPES ================= */
 
 type ClassType = {
@@ -51,6 +54,7 @@ const [selectedYear, setSelectedYear] = useState<string>(""); // stores ID
   const [toast, setToast] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
+const router = useRouter();
 
   /* ================= HELPERS ================= */
 
@@ -154,11 +158,6 @@ const handleUpload = async () => {
     return;
   }
 
-  if (uploading) {
-    showToast("⚠️ Upload in progress");
-    return;
-  }
-
   if (!files.length) {
     showToast("⚠️ Select the Excel file");
     return;
@@ -170,50 +169,70 @@ const handleUpload = async () => {
     const formData = new FormData();
     formData.append("file", files[0]);
 
+    /* 🔍 LOG EVERYTHING BEFORE REQUEST */
+    console.group("📤 STUDENT UPLOAD DEBUG");
+    console.log("Batch ID:", activeBatch.id);
+    console.log("Academic Year:", activeBatch.academic_year_id);
+    console.log("Class ID:", activeBatch.class_id);
+    console.log("Section ID:", activeBatch.section_id);
+    console.log("File name:", files[0].name);
+    console.log("File size:", files[0].size);
+    console.log("File type:", files[0].type);
+
+    console.log("FormData entries:");
+    for (const [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+    console.groupEnd();
+
     const res = await fetch(
       `${BASE_URL}/api/v1/studentbatches/${activeBatch.id}/upload`,
       {
         method: "POST",
-        headers: { Authorization: `Bearer ${getAdminToken()}` },
+        headers: {
+          Authorization: `Bearer ${getAdminToken()}`,
+        },
         body: formData,
       }
     );
 
-    /* ===== VALIDATION ERROR ===== */
-    if (res.status === 422) {
-      const data = await res.json();
+    /* 🔥 LOG RESPONSE EVEN FOR 500 */
+    console.group("📥 SERVER RESPONSE");
+    console.log("Status:", res.status);
+    console.log("Status Text:", res.statusText);
 
-      if (confirm("Errors found. Download error report PDF?")) {
-        const binary = atob(data.error_pdf_base64);
-        const bytes = new Uint8Array(binary.length);
+    const text = await res.text();
+    console.log("Raw response body:", text);
+    console.groupEnd();
 
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-
-        const blob = new Blob([bytes], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        window.open(url);
-      }
-
-      return;
-    }
-
-    /* ===== SUCCESS ===== */
-    if (res.status === 201) {
+    if (res.status === 201 || res.status === 200) {
       showToast("🎉 Students uploaded successfully");
       setActiveBatch(null);
       setFiles([]);
       reloadBatches();
-      window.location.href = "/students/view";
+       router.push(
+    `/students?class_id=${activeBatch.class_id}&section_id=${activeBatch.section_id ?? ""}`
+  );
+
+      return;
     }
+
+    if (res.status === 422) {
+      const data = JSON.parse(text);
+      console.error("Validation errors:", data);
+      return;
+    }
+
+    showToast("❌ Server error while uploading");
+
   } catch (err) {
-    console.error(err);
-    showToast("❌ Upload failed. Please try again.");
+    console.error("💥 Upload crashed:", err);
+    showToast("❌ Upload failed");
   } finally {
-    setUploading(false); // ✅ ALWAYS RESET
+    setUploading(false);
   }
 };
+
 
 
 
