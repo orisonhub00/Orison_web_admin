@@ -5,6 +5,8 @@ import { ChevronLeft } from "lucide-react";
 import { BASE_URL } from "@/lib/authClient";
 import { getAdminToken } from "@/lib/getToken";
 import { useParams } from "next/navigation";
+import toast from "react-hot-toast";
+
 
 /* ================= TYPES ================= */
 
@@ -45,9 +47,12 @@ export default function EditStudent({
       });
       const data = await res.json();
       if (data.success) setForm(data.student);
+      
       setLoading(false);
+      
     };
     fetchStudent();
+    toast.success("Student data loaded");
   }, [id]);
 
   /* ================= UPDATE ================= */
@@ -67,7 +72,7 @@ export default function EditStudent({
     const data = await res.json();
 
     if (data.success) {
-      alert("Student updated successfully");
+      toast.success("Student updated successfully");
       onBack?.();
     }
   };

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { createSection, updateSection } from "@/lib/authClient";
+import toast from "react-hot-toast";
+
 
 export default function CreateSection({
   onBack,
@@ -30,7 +32,7 @@ export default function CreateSection({
 
   const handleSave = async () => {
     if (sectionName.trim() === "") {
-      alert("Enter section name");
+      toast.error("Enter section name");
       return;
     }
 
@@ -42,17 +44,17 @@ export default function CreateSection({
           sectionName,
           isActive ? "active" : "inactive"
         );
-        alert("✅ Section updated successfully!");
+        toast.success(`Section "${sectionName}" updated successfully!`);
       } else {
         await createSection(sectionName);
-        alert(`✅ Section "${sectionName}" created successfully!`);
+        toast.success(`Section "${sectionName}" created successfully!`);
       }
 
       setSectionName("");
       onBack();
     } catch (error: any) {
-      console.error("❌ Save Section Error:", error);
-      alert(`❌ Error: ${error.message}`);
+      toast.error("❌ Save Section Error:", error);
+      toast.error(`Error: ${error.message}`);
     } finally {
       setLoading(false);
     }

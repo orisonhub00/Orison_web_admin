@@ -4,6 +4,10 @@ import {
   setAdminToken,
   removeAdminToken,
 } from "@/lib/getToken";
+import { Toaster } from "react-hot-toast";
+
+
+import toast from "react-hot-toast";
 
 export const BASE_URL =
   // process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4447";
@@ -17,7 +21,11 @@ export async function adminLogin(email: string, password: string) {
     body: JSON.stringify({ email, password }),
   });
   const data = await res.json();
-  if (!res.ok || !data.success) throw new Error(data.message || "Login failed");
+  if (!res.ok || !data.success) 
+    
+    throw new Error(data.message || "Login failed");
+
+    toast.success("Login successful");
   setAdminToken(data.token); // Store token in localStorage
   return data;
 }
@@ -36,6 +44,7 @@ export async function getClasses() {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch classes");
+  toast.success("Classes fetched successfully");
   return data.classes.map((cls: any) => ({
     id: cls.id,
     class_name: cls.class_name,
@@ -57,6 +66,7 @@ export async function createClass(className: string) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to create class");
+  toast.success("Class created successfully");
   return data;
 }
 
@@ -94,6 +104,7 @@ export async function getClassById(id: string) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch class details");
+  toast.success("Class details fetched successfully");
   return data.class;
 }
 
@@ -126,6 +137,7 @@ export async function getSections() {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch sections");
+  toast.success("Sections fetched successfully");
   return data.sections.map((sec: any) => ({
     id: sec.id,
     section_name: sec.section_name,
@@ -146,6 +158,7 @@ export async function getSectionById(id: string) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch section");
+  toast.success("Section fetched successfully");
   return data.section;
 }
 
@@ -200,6 +213,7 @@ export async function deleteSection(id: string) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to delete section");
+  toast.success("Section deleted successfully");
   return data;
 }
 
@@ -216,6 +230,8 @@ export async function createAcademicYear(yearName: string) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to create academic year");
+
+  toast.success("Academic year created successfully");
   return data.data;
 }
 
@@ -229,6 +245,8 @@ export async function getAcademicYears(search = "", page = 1, limit = 20) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch academic years");
+  toast.success
+    ("Academic years fetched successfully");
   return data.data;
 }
 
@@ -242,6 +260,7 @@ export async function getAcademicYearById(id: string) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch academic year");
+  toast.success("Academic year fetched successfully");
   return data.data;
 }
 
@@ -262,6 +281,7 @@ export async function updateAcademicYear(
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to update academic year");
+  toast.success("Academic year updated successfully");
   return data.data;
 }
 
@@ -276,6 +296,7 @@ export async function deleteAcademicYear(id: string) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to delete academic year");
+  toast.success("Academic year deleted successfully");
   return data;
 }
 
@@ -308,7 +329,7 @@ export async function getSectionsByClass(
   if (!res.ok || !data.success) {
     throw new Error(data.message || "Failed to fetch class sections");
   }
-
+toast.success("Class sections fetched successfully");
   return data;
 }
 
@@ -335,6 +356,6 @@ export async function assignSectionsToClass(
   if (!res.ok || !data.success) {
     throw new Error(data.message || "Failed to assign sections");
   }
-
+toast.success("Sections assigned to class successfully");
   return data;
 }

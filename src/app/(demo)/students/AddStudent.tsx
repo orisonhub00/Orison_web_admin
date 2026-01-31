@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, Download } from "lucide-react";
 import { getAcademicYears, getClasses, getSections } from "@/lib/authClient"; // import your API functions
+import toast from "react-hot-toast";
 
 export default function AddStudent({
   onBack,
@@ -49,7 +50,8 @@ export default function AddStudent({
       } catch (error) {
         console.error(
           "Error fetching classes, sections or academic years:",
-          error
+          error,
+          toast.error("Error fetching data")
         );
       }
     };
@@ -62,7 +64,7 @@ export default function AddStudent({
     const sectionValue =
       selectedSection === "Other" ? otherSection : selectedSection;
     if (!selectedClass || !sectionValue || !selectedYear) {
-      alert("Please select Class, Section and Academic Year.");
+      toast.error("Please select Class, Section and Academic Year.");
       return;
     }
 
@@ -86,7 +88,7 @@ export default function AddStudent({
       link.remove();
     } catch (error) {
       console.error(error);
-      alert("Error downloading file");
+      toast.error("Error downloading file");
     } finally {
       onNext?.();
     }

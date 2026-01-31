@@ -7,6 +7,7 @@ import {
   getAcademicYearById,
   deleteAcademicYear,
 } from "@/lib/authClient";
+import toast from "react-hot-toast";
 
 interface AcademicYearType {
   id: string;
@@ -36,7 +37,7 @@ export default function ViewAcademicYears({
         const list = await getAcademicYears();
         setYears(list);
       } catch (err: any) {
-        alert(`❌ ${err.message}`);
+        toast.error(`❌ ${err.message}`);
       } finally {
         setLoading(false);
       }
@@ -50,7 +51,7 @@ export default function ViewAcademicYears({
       const yr = await getAcademicYearById(id);
       setSelectedYear(yr);
     } catch (err: any) {
-      alert(`❌ ${err.message}`);
+      toast.error(`❌ ${err.message}`);
     }
   };
 
@@ -60,9 +61,9 @@ export default function ViewAcademicYears({
     try {
       await deleteAcademicYear(id);
       setYears((prev) => prev.filter((y) => y.id !== id));
-      alert("✅ Deleted");
+      toast.success("✅ Deleted");
     } catch (err: any) {
-      alert(`❌ ${err.message}`);
+      toast.error(`❌ ${err.message}`);
     }
   };
 

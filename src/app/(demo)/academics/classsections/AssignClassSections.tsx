@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useClasses } from "@/lib/hooks/useClasses";
 import { useSections } from "@/lib/hooks/useSections";
+import toast from "react-hot-toast";
+
 // import {
 //   assignSectionsToClass,
 //   getSectionsByClass,
@@ -81,7 +83,7 @@ const toggleSection = (id: string) => {
     setLoading(true);
     await assignSectionsToClass(classId, selectedSections);
     setLoading(false);
-    alert("Sections assigned successfully");
+    toast.success("Sections assigned successfully");
   };
 
   return (
