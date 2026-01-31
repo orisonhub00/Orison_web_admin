@@ -4,16 +4,17 @@ import { useState } from "react";
 import {
   ChevronRight,
   ChevronLeft,
-  GraduationCap,
-  Users,
-  ClipboardList,
-  BookOpen,
-  LayoutGrid,
-  CalendarDays,
-  Building2,
-  PenTool,
-  Bus,
-  UtensilsCrossed,
+  UserSquare2,
+  UserCog,
+  UsersRound,
+  CalendarCheck2,
+  NotebookPen,
+  CalendarClock,
+  FileCheck2,
+  Wallet,
+  Utensils,
+  LibraryBig,
+  Gauge,
   ChevronDown,
 } from "lucide-react";
 import Image from "next/image";
@@ -26,7 +27,6 @@ export default function Sidebar() {
   const [academicsOpen, setAcademicsOpen] = useState(false);
   const pathname = usePathname();
 
-  /* ================= SUB ITEM ================= */
   function SidebarSubItem({ label, href }: { label: string; href: string }) {
     const isActive = pathname === href;
     return (
@@ -40,7 +40,6 @@ export default function Sidebar() {
     );
   }
 
-  /* ================= MAIN ITEM ================= */
   function SidebarItem({
     icon,
     label,
@@ -68,12 +67,9 @@ export default function Sidebar() {
           }
         `}
       >
-        {/* ICON */}
         <div
-          className={`
-            flex items-center justify-center rounded-full bg-primary/20 transition-all
-            ${open ? "h-7 w-7" : "h-11 w-11"}
-          `}
+          className={`flex items-center justify-center rounded-full bg-primary/20
+          ${open ? "h-7 w-7" : "h-11 w-11"}`}
         >
           {icon}
         </div>
@@ -92,22 +88,29 @@ export default function Sidebar() {
       bg-white border-r border-border`}
     >
       {/* LOGO */}
-      <div className="flex items-center justify-center h-22.5 bg-white border-b border-border">
-        {sidebarOpen ? (
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={150}
-            height={50}
-            className="h-12 w-auto object-contain"
-            priority
-          />
-        ) : (
-          <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow">
-            <span className="text-white font-bold text-lg">▣</span>
-          </div>
-        )}
-      </div>
+    {/* LOGO */}
+<div className="flex items-center justify-center h-22.5 bg-white border-b border-border">
+  {sidebarOpen ? (
+    <Image
+      src="/logo.png"
+      alt="Logo"
+      width={150}
+      height={50}
+      className="h-12 w-auto object-contain"
+      priority
+    />
+  ) : (
+    <Image
+      src="/icons/sidebar/dashboard.png"
+      alt="Sidebar Icon"
+      width={40}
+      height={40}
+      className="h-10 w-10 object-contain"
+      priority
+    />
+  )}
+</div>
+
 
       {/* TOGGLE */}
       <button
@@ -128,14 +131,15 @@ export default function Sidebar() {
         className={`flex-1 px-3 py-5 overflow-y-auto
         ${sidebarOpen ? "bg-primary pr-4" : "bg-white pr-2 space-y-2"}`}
       >
+        {/* Dashboard */}
         <SidebarItem
-          icon={<LayoutGrid size={18} />}
+          icon={<Gauge size={18} />}
           label="Dashboard"
           open={sidebarOpen}
           href="/dashboard"
         />
 
-        {/* STUDENTS */}
+        {/* Students */}
         <div
           className={`rounded-2xl transition mb-4
           ${sidebarOpen ? "bg-[#fde8df] shadow" : ""}`}
@@ -149,7 +153,7 @@ export default function Sidebar() {
               className={`flex items-center justify-center rounded-full bg-primary/20
               ${sidebarOpen ? "h-8 w-8" : "h-11 w-11"}`}
             >
-              <GraduationCap size={sidebarOpen ? 16 : 20} />
+              <UserSquare2 size={sidebarOpen ? 16 : 20} />
             </div>
 
             {sidebarOpen && (
@@ -175,7 +179,7 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* ACADEMICS */}
+        {/* Academics */}
         <div
           className={`rounded-2xl transition mb-4
           ${sidebarOpen ? "bg-[#fde8df] shadow" : ""}`}
@@ -189,7 +193,7 @@ export default function Sidebar() {
               className={`flex items-center justify-center rounded-full bg-primary/20
               ${sidebarOpen ? "h-8 w-8" : "h-11 w-11"}`}
             >
-              <BookOpen size={sidebarOpen ? 16 : 20} />
+              <LibraryBig size={sidebarOpen ? 16 : 20} />
             </div>
 
             {sidebarOpen && (
@@ -227,15 +231,15 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* OTHERS */}
-        <SidebarItem icon={<Users size={18} />} label="Teachers" open={sidebarOpen} href="/teachers" />
-        <SidebarItem icon={<ClipboardList size={18} />} label="Attendance" open={sidebarOpen} href="/attendance" />
-        <SidebarItem icon={<BookOpen size={18} />} label="Subjects" open={sidebarOpen} href="/subjects" />
-        <SidebarItem icon={<CalendarDays size={18} />} label="Timetable" open={sidebarOpen} href="/timetable" />
-        <SidebarItem icon={<Building2 size={18} />} label="Staff" open={sidebarOpen} href="/staff" />
-        <SidebarItem icon={<PenTool size={18} />} label="Exams" open={sidebarOpen} href="/exams" />
-        <SidebarItem icon={<Bus size={18} />} label="Fees" open={sidebarOpen} href="/fees" />
-        <SidebarItem icon={<UtensilsCrossed size={18} />} label="Food" open={sidebarOpen} href="/food" />
+        {/* Others */}
+        <SidebarItem icon={<UserCog size={18} />} label="Teachers" open={sidebarOpen} href="/teachers" />
+        <SidebarItem icon={<CalendarCheck2 size={18} />} label="Attendance" open={sidebarOpen} href="/attendance" />
+        <SidebarItem icon={<NotebookPen size={18} />} label="Subjects" open={sidebarOpen} href="/subjects" />
+        <SidebarItem icon={<CalendarClock size={18} />} label="Timetable" open={sidebarOpen} href="/timetable" />
+        <SidebarItem icon={<UsersRound size={18} />} label="Staff" open={sidebarOpen} href="/staff" />
+        <SidebarItem icon={<FileCheck2 size={18} />} label="Exams" open={sidebarOpen} href="/exams" />
+        <SidebarItem icon={<Wallet size={18} />} label="Fees" open={sidebarOpen} href="/fees" />
+        <SidebarItem icon={<Utensils size={18} />} label="Food" open={sidebarOpen} href="/food" />
       </div>
     </aside>
   );
