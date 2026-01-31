@@ -3,9 +3,9 @@
 import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { setAuthToken } from "@/lib/cookies";
-import { adminLogin } from "@/lib/authClient";
 import toast from "react-hot-toast";
+import { loginAction } from "@/actions/auth";
+import { setAdminToken } from "@/lib/getToken";
 
 export default function Login() {
   // ✅ Stages
@@ -100,29 +100,33 @@ export default function Login() {
       console.log("🔐 Starting login...");
       console.log("📨 Email:", email);
 
-      const data = await adminLogin(email, password);
+      // Call Server Action
+      const data = await loginAction(email, password);
+
+      if (!data.success) {
+         throw new Error(data.message || "Login failed");
+      }
 
       console.log("🎯 Login success response:", data);
 
-      // Store token in cookie
-      setAuthToken(data.token);
-      console.log("🍪 Token stored successfully:", data.token);
-
-      console.log("📦 Current cookies:", document.cookie);
+      // Store token in localStorage for Client-Side API calls
+      if (data.token) {
+         setAdminToken(data.token);
+         console.log("🍪 Token stored in localStorage (for API):", data.token);
+      }
 
       // Optional: store user
-      localStorage.setItem("user", JSON.stringify(data.user));
-      console.log("👤 User stored in localStorage:", data.user);
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+        console.log("👤 User stored in localStorage:", data.user);
+      }
 
       // Toast instead of alert
       toast.success("Login successful!");
 
       // Redirect
-      if (role === "admin") {
-        router.push("/dashboard");
-      } else {
-        router.push("/dashboard");
-      }
+      router.push("/dashboard");
+
     } catch (err: any) {
       console.error("❌ Login failed:", err);
       setError(err.message || "Invalid credentials");
