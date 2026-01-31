@@ -11,7 +11,6 @@ import {
   LayoutGrid,
   CalendarDays,
   Building2,
-  FileText,
   PenTool,
   Bus,
   UtensilsCrossed,
@@ -32,7 +31,7 @@ export default function Sidebar() {
     return (
       <Link
         href={href}
-        className={`block w-full text-left text-sm px-4 py-2 rounded-xl
+        className={`block w-full text-left text-sm px-4 py-2 rounded-xl mb-2
         ${isActive ? "bg-white shadow" : "hover:bg-white/50"}`}
       >
         {label}
@@ -51,12 +50,11 @@ export default function Sidebar() {
     open: boolean;
     href?: string;
   }) {
-    // If href provided, check active. If dropdown, handled separately.
     const isActive = href ? pathname === href : false;
 
     const content = (
       <div
-        className={`w-full flex items-center gap-3 px-4 py-2 rounded-2xl transition
+        className={`w-full flex items-center gap-3 px-4 py-2 rounded-2xl transition mb-3
         ${
           isActive
             ? "bg-white text-[#8b3a16] shadow"
@@ -73,11 +71,7 @@ export default function Sidebar() {
       </div>
     );
 
-    if (href) {
-      return <Link href={href}>{content}</Link>;
-    }
-
-    return <button className="w-full text-left">{content}</button>;
+    return href ? <Link href={href}>{content}</Link> : content;
   }
 
   return (
@@ -86,7 +80,7 @@ export default function Sidebar() {
       ${sidebarOpen ? "w-65" : "w-18"}
       bg-white border-r border-border`}
     >
-      {/* Logo Area (always white) */}
+      {/* Logo */}
       <div className="flex items-center justify-center h-22.5 bg-white border-b border-border">
         {sidebarOpen ? (
           <Image
@@ -104,85 +98,80 @@ export default function Sidebar() {
         )}
       </div>
 
-      {/* Toggle Arrow */}
+      {/* Toggle */}
       <button
         onClick={() => {
           setSidebarOpen(!sidebarOpen);
           setStudentsOpen(false);
+          setAcademicsOpen(false);
         }}
         className="absolute top-1/2 -right-4 -translate-y-1/2 z-50
                    h-8 w-8 rounded-full bg-white border border-border shadow
-                   flex items-center justify-center hover:opacity-90"
+                   flex items-center justify-center"
       >
         {sidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
       </button>
 
-      {/* MENU AREA */}
+      {/* MENU (SCROLL + BOTTOM SPACING) */}
       <div
-        className={`flex-1 transition-all duration-300 px-3  py-5 space-y-3
+        className={`flex-1 px-3 py-5 overflow-y-auto
         ${sidebarOpen ? "bg-primary pr-4" : "bg-white pr-2"}`}
       >
-        {/* Dashboard Item */}
+        {/* Dashboard */}
         <SidebarItem
           icon={<LayoutGrid size={18} />}
           label="Dashboard"
           open={sidebarOpen}
           href="/dashboard"
         />
-        {/* Students Dropdown Card */}
+
+        {/* Students */}
         <div
-          className={`w-full rounded-2xl  shadow transition
-          ${sidebarOpen ? "bg-[#fde8df]" : "bg-transparent shadow-none p-0"}
-        `}
+          className={`w-full rounded-2xl shadow transition mb-4
+          ${sidebarOpen ? "bg-[#fde8df]" : "bg-transparent shadow-none p-0"}`}
         >
           <button
             onClick={() => sidebarOpen && setStudentsOpen(!studentsOpen)}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition
-            ${
-              sidebarOpen
-                ? "hover:bg-white/40"
-                : "justify-center hover:bg-muted"
-            }
-          `}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl"
           >
             <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-              <GraduationCap size={16} className="text-primary" />
+              <GraduationCap size={16} />
             </div>
 
             {sidebarOpen && (
               <>
-                <span className="text-sm font-semibold text-[#8b3a16] flex-1 text-left">
+                <span className="text-sm font-semibold flex-1 text-left">
                   Students
                 </span>
                 <ChevronDown
                   size={16}
-                  className={`transition ${studentsOpen ? "rotate-180" : ""}`}
+                  className={`transition ${
+                    studentsOpen ? "rotate-180" : ""
+                  }`}
                 />
               </>
             )}
           </button>
 
-          {/* Dropdown */}
           {sidebarOpen && studentsOpen && (
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 px-2">
               <SidebarSubItem label="Add Student" href="/students/add" />
               <SidebarSubItem label="View Students" href="/students" />
             </div>
           )}
         </div>
 
-        {/* Academics Dropdown (now contains all sub-items) */}
+        {/* Academics */}
         <div
-          className={`w-full rounded-2xl shadow transition ${
-            sidebarOpen ? "bg-[#fde8df]" : ""
-          }`}
+          className={`w-full rounded-2xl shadow transition mb-4
+          ${sidebarOpen ? "bg-[#fde8df]" : ""}`}
         >
           <button
             onClick={() => sidebarOpen && setAcademicsOpen(!academicsOpen)}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-xl"
           >
             <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-              <BookOpen size={16} className="text-primary" />
+              <BookOpen size={16} />
             </div>
 
             {sidebarOpen && (
@@ -199,26 +188,11 @@ export default function Sidebar() {
           </button>
 
           {sidebarOpen && academicsOpen && (
-            <div className="mt-3 space-y-2">
-              {/* Classes */}
-              <SidebarSubItem
-                label="Create Class"
-                href="/classes/create"
-              />
-              <SidebarSubItem
-                label="View Classes"
-                href="/classes"
-              />
-              {/* Sections */}
-              <SidebarSubItem
-                label="Create Section"
-                href="/sections/create"
-              />
-              <SidebarSubItem
-                label="View Sections"
-                href="/sections"
-              />
-              {/* Academic Years */}
+            <div className="mt-3 px-2">
+              <SidebarSubItem label="Create Class" href="/classes/create" />
+              <SidebarSubItem label="View Classes" href="/classes" />
+              <SidebarSubItem label="Create Section" href="/sections/create" />
+              <SidebarSubItem label="View Sections" href="/sections" />
               <SidebarSubItem
                 label="Create Academic Year"
                 href="/academicyears/create"
@@ -235,52 +209,16 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Other Items */}
-        <SidebarItem
-          icon={<Users size={18} />}
-          label="Teachers"
-          open={sidebarOpen}
-          href="/teachers" 
-        />
-        <SidebarItem
-          icon={<ClipboardList size={18} />}
-          label="Attendance"
-          open={sidebarOpen}
-          href="/attendance"
-        />
-        <SidebarItem
-          icon={<BookOpen size={18} />}
-          label="Subjects"
-          open={sidebarOpen}
-          href="/subjects"
-        />
-        <SidebarItem
-          icon={<CalendarDays size={18} />}
-          label="Timetable"
-          open={sidebarOpen}
-          href="/timetable"
-        />
-        <SidebarItem
-          icon={<Building2 size={18} />}
-          label="Staff"
-          open={sidebarOpen}
-          href="/staff"
-        />
-        <SidebarItem
-          icon={<PenTool size={18} />}
-          label="Exams"
-          open={sidebarOpen}
-          href="/exams"
-        />
+        {/* Others */}
+        <SidebarItem icon={<Users size={18} />} label="Teachers" open={sidebarOpen} href="/teachers" />
+        <SidebarItem icon={<ClipboardList size={18} />} label="Attendance" open={sidebarOpen} href="/attendance" />
+        <SidebarItem icon={<BookOpen size={18} />} label="Subjects" open={sidebarOpen} href="/subjects" />
+        <SidebarItem icon={<CalendarDays size={18} />} label="Timetable" open={sidebarOpen} href="/timetable" />
+        <SidebarItem icon={<Building2 size={18} />} label="Staff" open={sidebarOpen} href="/staff" />
+        <SidebarItem icon={<PenTool size={18} />} label="Exams" open={sidebarOpen} href="/exams" />
         <SidebarItem icon={<Bus size={18} />} label="Fees" open={sidebarOpen} href="/fees" />
-        <SidebarItem
-          icon={<UtensilsCrossed size={18} />}
-          label="Food"
-          open={sidebarOpen}
-          href="/food"
-        />
+        <SidebarItem icon={<UtensilsCrossed size={18} />} label="Food" open={sidebarOpen} href="/food" />
       </div>
     </aside>
   );
 }
-
