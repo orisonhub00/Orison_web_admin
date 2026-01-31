@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { createAcademicYear, updateAcademicYear } from "@/lib/authClient";
+import toast from "react-hot-toast";
+
 
 export default function CreateAcademicYear({
   onBack,
@@ -29,7 +31,7 @@ export default function CreateAcademicYear({
 
   const handleSave = async () => {
     if (!yearName.trim()) {
-      alert("Enter academic year");
+      toast.success("Enter academic year");
       return;
     }
 
@@ -42,16 +44,16 @@ export default function CreateAcademicYear({
           yearName,
           isActive ? "active" : "inactive"
         );
-        alert("✅ Academic year updated");
+        toast.success("✅ Academic year updated");
       } else {
         await createAcademicYear(yearName);
-        alert("✅ Academic year created");
+        toast.success("✅ Academic year created");
       }
 
       setYearName("");
       onBack();
     } catch (err: any) {
-      alert(`❌ ${err.message}`);
+      toast.success(`❌ ${err.message}`);
     } finally {
       setLoading(false);
     }

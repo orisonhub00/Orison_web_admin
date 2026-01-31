@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { createClass, updateClass } from "@/lib/authClient";
+import toast from "react-hot-toast";
+
 
 export default function CreateClass({
   onBack,
@@ -30,7 +32,7 @@ export default function CreateClass({
 
   const handleSave = async () => {
     if (className.trim() === "") {
-      alert("Enter class name");
+      toast.success("Enter class name");
       return;
     }
 
@@ -44,18 +46,18 @@ export default function CreateClass({
           className,
           isActive ? "active" : "inactive"
         );
-        alert("✅ Class updated successfully!");
+        toast.success("Class updated successfully");
       } else {
         // ✅ Create class WITHOUT status
         await createClass(className);
-        alert(`✅ Class "${className}" created successfully!`);
+        toast.success(`✅ Class "${className}" created successfully!`);
       }
 
       setClassName("");
       onBack();
     } catch (error: any) {
       console.error("❌ Save Class Error:", error);
-      alert(`❌ Error: ${error.message}`);
+      toast.error(`❌ Error: ${error.message}`);
     } finally {
       setLoading(false);
     }

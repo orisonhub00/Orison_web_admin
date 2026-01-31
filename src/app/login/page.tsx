@@ -142,7 +142,7 @@ export default function Login() {
   };
 
   const handleResetPassword = () => {
-    alert("✅ Password updated successfully!");
+    toast.success("✅ Password updated successfully!");
     setStage(STAGES.EMAIL_LOGIN);
     setNewPassword("");
     setConfirmPassword("");
@@ -156,7 +156,7 @@ export default function Login() {
   };
 
   const handleVerifyOtp = () => {
-    alert(`✅ Logged in as ${role.toUpperCase()} with MOBILE: +91${mobile}`);
+    toast.error(`✅ Logged in as ${role.toUpperCase()} with MOBILE: +91${mobile}`);
 
     if (role === "admin") {
       router.push("/dashboard");

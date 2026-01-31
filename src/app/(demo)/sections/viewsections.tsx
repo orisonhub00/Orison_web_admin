@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, Edit2, Trash2 } from "lucide-react";
 import { getSections, getSectionById, deleteSection } from "@/lib/authClient";
+import toast from "react-hot-toast";
+
 
 interface SectionType {
   id: string;
@@ -40,7 +42,8 @@ export default function ViewSections({
           }))
         );
       } catch (err: any) {
-        alert(err.message);
+        toast.error(err.message);
+        
       } finally {
         setLoading(false);
       }
@@ -55,7 +58,7 @@ export default function ViewSections({
       const sec = await getSectionById(id);
       setSelectedSection({ ...sec, status: sec.status || "active" });
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setDetailLoading(false);
     }
@@ -67,9 +70,9 @@ export default function ViewSections({
     try {
       await deleteSection(id);
       setSections((prev) => prev.filter((s) => s.id !== id));
-      alert("Section deleted successfully");
+      toast.success("Section deleted successfully");
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
