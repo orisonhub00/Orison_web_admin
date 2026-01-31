@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, Trash2, Upload as UploadIcon } from "lucide-react";
+import toast from "react-hot-toast";
+
 
 export default function UploadStudentData({ onBack }: { onBack: () => void }) {
   const [fileName, setFileName] = useState("");
@@ -35,7 +37,7 @@ export default function UploadStudentData({ onBack }: { onBack: () => void }) {
 
   const handleUpload = () => {
     if (!fileName || !selectedYear || !selectedClass || !selectedSection || files.length === 0) {
-      alert("Please fill all fields and upload at least one file.");
+      toast.success("Please fill all fields and upload at least one file.");
       return;
     }
 
@@ -52,7 +54,7 @@ export default function UploadStudentData({ onBack }: { onBack: () => void }) {
       body: formData,
     })
       .then((res) => res.json())
-      .then(() => alert("Files uploaded successfully"))
+      .then(() => toast.success("Files uploaded successfully"))
       .catch((err) => console.error(err));
   };
 

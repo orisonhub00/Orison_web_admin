@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, Edit2, Trash2 } from "lucide-react";
 import { getClassById, getClasses, deleteClass } from "@/lib/authClient";
+import toast from "react-hot-toast";
+
+
 
 interface ClassType {
   id: string;
@@ -38,12 +41,13 @@ export default function ViewClasses({
           }))
         );
       } catch (error: any) {
-        alert(error.message);
+        toast.error(error.message);
       } finally {
         setLoading(false);
       }
     };
     fetchClasses();
+    
   }, []);
 
   /* ---------- FETCH DETAILS ---------- */
@@ -53,7 +57,7 @@ export default function ViewClasses({
       const cls = await getClassById(id);
       setSelectedClass({ ...cls, status: cls.status || "active" });
     } catch (error: any) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setDetailLoading(false);
     }
@@ -65,9 +69,9 @@ export default function ViewClasses({
     try {
       await deleteClass(id);
       setClasses((prev) => prev.filter((c) => c.id !== id));
-      alert("Class deleted successfully");
+      toast.success("Class deleted successfully");
     } catch (error: any) {
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 

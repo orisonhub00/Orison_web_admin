@@ -5,6 +5,7 @@ import { Search, Eye, Pencil, Plus } from "lucide-react";
 import { BASE_URL, getClasses, getSectionsByClass } from "@/lib/authClient";
 import { getAdminToken } from "@/lib/getToken";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 /* ================= TYPES ================= */
 
@@ -96,6 +97,7 @@ export default function AllStudents({
     const data = await res.json();
 
     if (data.success) {
+      toast.success("Students fetched successfully");
       setStudents(data.students || []);
       setTotal(data.total || 0);
     } else {

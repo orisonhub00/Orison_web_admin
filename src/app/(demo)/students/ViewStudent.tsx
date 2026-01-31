@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { BASE_URL } from "@/lib/authClient";
 import { getAdminToken } from "@/lib/getToken";
+import toast from "react-hot-toast";
 
 interface ViewStudentProps {
   studentId: string;
@@ -55,9 +56,11 @@ export default function ViewStudent({ studentId, onBack }: ViewStudentProps) {
 
         if (data.success) {
           setStudent(data.student);
+          toast.success("Student details loaded");
         }
       } catch (err) {
         console.error("Failed to fetch student", err);
+        toast.error("Failed to fetch student details");
       } finally {
         setLoading(false);
       }
