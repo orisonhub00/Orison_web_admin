@@ -26,6 +26,7 @@ export default function Sidebar() {
   const [academicsOpen, setAcademicsOpen] = useState(false);
   const pathname = usePathname();
 
+  /* ================= SUB ITEM ================= */
   function SidebarSubItem({ label, href }: { label: string; href: string }) {
     const isActive = pathname === href;
     return (
@@ -39,6 +40,7 @@ export default function Sidebar() {
     );
   }
 
+  /* ================= MAIN ITEM ================= */
   function SidebarItem({
     icon,
     label,
@@ -54,16 +56,25 @@ export default function Sidebar() {
 
     const content = (
       <div
-        className={`w-full flex items-center gap-3 px-4 py-2 rounded-2xl transition mb-3
-        ${
-          isActive
-            ? "bg-white text-[#8b3a16] shadow"
-            : open
-            ? "bg-[#fde8df] text-[#8b3a16] hover:bg-white"
-            : "bg-transparent hover:bg-muted"
-        }`}
+        className={`
+          w-full flex items-center transition rounded-2xl mb-3
+          ${open ? "gap-3 px-4 py-2" : "justify-center py-3"}
+          ${
+            isActive
+              ? "bg-white text-[#8b3a16] shadow"
+              : open
+              ? "bg-[#fde8df] text-[#8b3a16] hover:bg-white"
+              : "hover:bg-muted"
+          }
+        `}
       >
-        <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center">
+        {/* ICON */}
+        <div
+          className={`
+            flex items-center justify-center rounded-full bg-primary/20 transition-all
+            ${open ? "h-7 w-7" : "h-11 w-11"}
+          `}
+        >
           {icon}
         </div>
 
@@ -80,7 +91,7 @@ export default function Sidebar() {
       ${sidebarOpen ? "w-65" : "w-18"}
       bg-white border-r border-border`}
     >
-      {/* Logo */}
+      {/* LOGO */}
       <div className="flex items-center justify-center h-22.5 bg-white border-b border-border">
         {sidebarOpen ? (
           <Image
@@ -92,13 +103,13 @@ export default function Sidebar() {
             priority
           />
         ) : (
-          <div className="h-11 w-11 rounded-2xl bg-primary flex items-center justify-center shadow">
+          <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center shadow">
             <span className="text-white font-bold text-lg">▣</span>
           </div>
         )}
       </div>
 
-      {/* Toggle */}
+      {/* TOGGLE */}
       <button
         onClick={() => {
           setSidebarOpen(!sidebarOpen);
@@ -112,12 +123,11 @@ export default function Sidebar() {
         {sidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
       </button>
 
-      {/* MENU (SCROLL + BOTTOM SPACING) */}
+      {/* MENU */}
       <div
         className={`flex-1 px-3 py-5 overflow-y-auto
-        ${sidebarOpen ? "bg-primary pr-4" : "bg-white pr-2"}`}
+        ${sidebarOpen ? "bg-primary pr-4" : "bg-white pr-2 space-y-2"}`}
       >
-        {/* Dashboard */}
         <SidebarItem
           icon={<LayoutGrid size={18} />}
           label="Dashboard"
@@ -125,17 +135,21 @@ export default function Sidebar() {
           href="/dashboard"
         />
 
-        {/* Students */}
+        {/* STUDENTS */}
         <div
-          className={`w-full rounded-2xl shadow transition mb-4
-          ${sidebarOpen ? "bg-[#fde8df]" : "bg-transparent shadow-none p-0"}`}
+          className={`rounded-2xl transition mb-4
+          ${sidebarOpen ? "bg-[#fde8df] shadow" : ""}`}
         >
           <button
             onClick={() => sidebarOpen && setStudentsOpen(!studentsOpen)}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl"
+            className={`w-full flex items-center transition
+            ${sidebarOpen ? "gap-3 px-3 py-2" : "justify-center py-3"}`}
           >
-            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-              <GraduationCap size={16} />
+            <div
+              className={`flex items-center justify-center rounded-full bg-primary/20
+              ${sidebarOpen ? "h-8 w-8" : "h-11 w-11"}`}
+            >
+              <GraduationCap size={sidebarOpen ? 16 : 20} />
             </div>
 
             {sidebarOpen && (
@@ -161,17 +175,21 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Academics */}
+        {/* ACADEMICS */}
         <div
-          className={`w-full rounded-2xl shadow transition mb-4
-          ${sidebarOpen ? "bg-[#fde8df]" : ""}`}
+          className={`rounded-2xl transition mb-4
+          ${sidebarOpen ? "bg-[#fde8df] shadow" : ""}`}
         >
           <button
             onClick={() => sidebarOpen && setAcademicsOpen(!academicsOpen)}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl"
+            className={`w-full flex items-center transition
+            ${sidebarOpen ? "gap-3 px-3 py-2" : "justify-center py-3"}`}
           >
-            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-              <BookOpen size={16} />
+            <div
+              className={`flex items-center justify-center rounded-full bg-primary/20
+              ${sidebarOpen ? "h-8 w-8" : "h-11 w-11"}`}
+            >
+              <BookOpen size={sidebarOpen ? 16 : 20} />
             </div>
 
             {sidebarOpen && (
@@ -209,7 +227,7 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Others */}
+        {/* OTHERS */}
         <SidebarItem icon={<Users size={18} />} label="Teachers" open={sidebarOpen} href="/teachers" />
         <SidebarItem icon={<ClipboardList size={18} />} label="Attendance" open={sidebarOpen} href="/attendance" />
         <SidebarItem icon={<BookOpen size={18} />} label="Subjects" open={sidebarOpen} href="/subjects" />
