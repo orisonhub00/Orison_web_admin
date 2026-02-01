@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Download, Upload as UploadIcon, Trash2 } from "lucide-react";
+import LoadingOverlay from "@/components/reuseble_components/LoadingOverlay";
 import { getClasses, getSectionsByClass, BASE_URL, getAcademicYears } from "@/lib/authClient";
 import { getAdminToken } from "@/lib/getToken";
 
@@ -36,6 +37,9 @@ type Batch = {
   success_count: number | null;
   failed_count: number | null;
   createdAt: string;
+  section?: { section_name: string };
+  class?: { class_name: string };
+  academicYear?: { year_name: string };
 };
 
 /* ================= COMPONENT ================= */
@@ -72,6 +76,7 @@ const router = useRouter();
   };
 
   const reloadBatches = async (p = 1) => {
+    setUploading(true);
     try {
       let url = `${BASE_URL}/api/v1/studentbatches?page=${p}&limit=5`;
       if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
@@ -86,6 +91,8 @@ const router = useRouter();
       setPage(p);
     } catch (err) {
       console.error("Failed to load batches:", err);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -160,7 +167,7 @@ const router = useRouter();
   /* ================= INIT ================= */
 
  useEffect(() => {
-  getClasses().then(setClasses);
+  getClasses().then(res => setClasses(res.classes));
 
   getAcademicYears()
     .then(setAcademicYears)
@@ -192,50 +199,64 @@ const router = useRouter();
       return;
     }
 
-    // 1️⃣ Create batch
-    const res = await fetch(`${BASE_URL}/api/v1/studentbatches/create-template`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getAdminToken()}`,
-      },
-      body: JSON.stringify({
-        academic_year_id: selectedYear,
-        class_id: selectedClass,
-        section_id: selectedSection || null,
-      }),
-    });
+    setUploading(true);
+    try {
+      // 1️⃣ Create batch
+      const res = await fetch(`${BASE_URL}/api/v1/studentbatches/create-template`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getAdminToken()}`,
+        },
+        body: JSON.stringify({
+          academic_year_id: selectedYear,
+          class_id: selectedClass,
+          section_id: selectedSection || null,
+        }),
+      });
 
-    const data = await res.json();
-    const batch = data.batch;
+      const data = await res.json();
+      const batch = data.batch;
 
-    // 2️⃣ Download Excel
-    const fileRes = await fetch(
-      `${BASE_URL}/api/v1/studentbatches/${batch.id}/template`,
-      { headers: { Authorization: `Bearer ${getAdminToken()}` } }
-    );
+      // 2️⃣ Download Excel
+      const fileRes = await fetch(
+        `${BASE_URL}/api/v1/studentbatches/${batch.id}/template`,
+        { headers: { Authorization: `Bearer ${getAdminToken()}` } }
+      );
 
-    const blob = await fileRes.blob();
-    const url = URL.createObjectURL(blob);
+      const blob = await fileRes.blob();
+      const url = URL.createObjectURL(blob);
 
-    // Get filename from response header
-    const disposition = fileRes.headers.get("Content-Disposition");
-    let filename = `students_${batch.id}.xlsx`; // fallback
-    if (disposition && disposition.indexOf("attachment") !== -1) {
-      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-      const matches = filenameRegex.exec(disposition);
-      if (matches != null && matches[1]) {
-        filename = matches[1].replace(/['"]/g, "");
+      // Get filename from response header
+      const disposition = fileRes.headers.get("Content-Disposition");
+      let filename = `students_${batch.id}.xlsx`; // fallback
+      if (disposition && disposition.indexOf("attachment") !== -1) {
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = filenameRegex.exec(disposition);
+        if (matches != null && matches[1]) {
+          filename = matches[1].replace(/['"]/g, "");
+        }
       }
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+
+      reloadBatches();
+      Swal.fire({
+        title: "Success",
+        text: "Template downloaded successfully!",
+        icon: "success",
+        confirmButtonColor: "#8b3a16",
+        confirmButtonText: "OK",
+      });
+    } catch (err) {
+      console.error("Download error:", err);
+      Swal.fire("Error", "Failed to download template.", "error");
+    } finally {
+      setUploading(false);
     }
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-
-    reloadBatches();
-    showToast("✅ Template downloaded");
   };
 
   /* ================= FILE PICK ================= */
@@ -303,8 +324,19 @@ const handleUpload = async () => {
       const data = JSON.parse(text);
       const { success_count, failed_count } = data.data || {};
       
-      const msg = `🎉 Processed: ${success_count} Added, ${failed_count} Failed. ${failed_count > 0 ? "Check history to download error sheet." : ""}`;
-      showToast(msg);
+      await Swal.fire({
+        title: "Upload Result",
+        html: `
+          <div class="text-left py-2">
+            <p class="text-green-600 font-bold mb-2">✅ Success: ${success_count} students added</p>
+            ${failed_count > 0 ? `<p class="text-red-500 font-bold">❌ Failed: ${failed_count} records</p>
+            <p class="text-xs text-gray-500 mt-2 italic">Check history below to download error sheet.</p>` : ""}
+          </div>
+        `,
+        icon: failed_count > 0 ? "warning" : "success",
+        confirmButtonColor: "#8b3a16",
+        confirmButtonText: "OK",
+      });
 
       setActiveBatch(null);
       setFiles([]);
@@ -344,22 +376,37 @@ const handleUpload = async () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", files[0]);
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", files[0]);
 
-    const res = await fetch(
-      `${BASE_URL}/api/v1/studentbatches/${batchId}/retry-upload`,
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${getAdminToken()}` },
-        body: formData,
+      const res = await fetch(
+        `${BASE_URL}/api/v1/studentbatches/${batchId}/retry-upload`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${getAdminToken()}` },
+          body: formData,
+        }
+      );
+
+      if (res.status === 201 || res.status === 200) {
+        Swal.fire({
+          title: "Retry Successful",
+          text: "Batch processing completed!",
+          icon: "success",
+          confirmButtonColor: "#8b3a16",
+        });
+        setFiles([]);
+        reloadBatches();
+      } else {
+        Swal.fire("Error", "Retry failed.", "error");
       }
-    );
-
-    if (res.status === 201) {
-      showToast("✅ Retry successful");
-      setFiles([]);
-      reloadBatches();
+    } catch (err) {
+      console.error("Retry error:", err);
+      Swal.fire("Error", "Something went wrong during retry.", "error");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -379,6 +426,8 @@ console.log("Class Map:", classMap);
 
 return (
   <div className="min-h-screen bg-[#f7ebe7] p-6">
+    {uploading && <LoadingOverlay message="Uploading Students... Please wait." />}
+    
     {toast && (
       <div className="fixed top-6 right-6 bg-black text-white px-4 py-2 rounded-lg z-50">
         {toast}
@@ -563,11 +612,11 @@ return (
               <tr key={batch.id} className="border-t hover:bg-gray-50">
                 <td className="p-3 text-gray-400">{(page - 1) * 5 + index + 1}</td>
                 <td className="p-3 font-medium">
-                  {classMap[batch.class_id] || "Class " + batch.class_id}
+                  {batch.class?.class_name || classMap[batch.class_id] || "Class " + batch.class_id}
                 </td>
 
-                <td className="p-3 text-center"> {academicYearMap[batch.academic_year_id] || "-"}</td>
-                <td className="p-3 text-center">{batch.section_id ? sectionMap[batch.section_id] || "-" : "-"}</td>
+                <td className="p-3 text-center"> {batch.academicYear?.year_name || academicYearMap[batch.academic_year_id] || "-"}</td>
+                <td className="p-3 text-center">{batch.section?.section_name || (batch.section_id ? sectionMap[batch.section_id] || "-" : "-")}</td>
                 <td className="p-3 text-center font-bold text-green-600">
                   {batch.success_count ?? (batch.status === "completed" ? "-" : 0)}
                 </td>
@@ -597,16 +646,23 @@ return (
                         Upload
                       </button>
                     )}
-                    {batch.status === "failed" && (
+                    {(batch.status === "failed" || (batch.failed_count ?? 0) > 0) && (
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           setActiveBatch(batch);
-                          showToast("Select corrected Excel and click Upload");
+                          await Swal.fire({
+                            title: "Retry Upload",
+                            text: "Please download the Error report, fix the highlighted fields in red, and then select the corrected file to re-upload.",
+                            icon: "info",
+                            confirmButtonText: "Select Corrected File",
+                            confirmButtonColor: "#3b82f6"
+                          });
+                          setFiles([]);
                           fileInputRef.current?.click();
                         }}
-                        className="text-red-600 hover:text-red-800 font-semibold cursor-pointer text-xs"
+                        className="text-blue-600 hover:text-blue-800 font-bold px-2 py-1 bg-blue-50 rounded cursor-pointer text-xs flex items-center gap-1"
                       >
-                        Retry
+                         Retry
                       </button>
                     )}
                     {(batch.failed_count ?? 0) > 0 && (

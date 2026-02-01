@@ -33,9 +33,9 @@ export default function ViewClasses({
     const fetchClasses = async () => {
       setLoading(true);
       try {
-        const data = await getClasses();
+        const { classes: classesData } = await getClasses();
         setClasses(
-          data.map((c: ClassType) => ({
+          classesData.map((c: ClassType) => ({
             ...c,
             status: c.status || "active",
           }))

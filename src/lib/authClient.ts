@@ -31,10 +31,10 @@ export async function adminLogin(email: string, password: string) {
 }
 
 // Example: Get Classes
-export async function getClasses() {
+export async function getClasses(search = "", page = 1, limit = 10) {
   const token = getAdminToken();
   if (!token) throw new Error("No admin token found. Please login again.");
-  const res = await fetch(`${BASE_URL}/api/v1/classes`, {
+  const res = await fetch(`${BASE_URL}/api/v1/classes?search=${search}&page=${page}&limit=${limit}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -44,12 +44,17 @@ export async function getClasses() {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch classes");
-  toast.success("Classes fetched successfully");
-  return data.classes.map((cls: any) => ({
-    id: cls.id,
-    class_name: cls.class_name,
-    status: cls.status || "active",
-  }));
+  
+  return {
+    classes: data.classes.map((cls: any) => ({
+      id: cls.id,
+      class_name: cls.class_name,
+      status: cls.status || "active",
+      section_count: cls.section_count || 0,
+      student_count: cls.student_count || 0,
+    })),
+    total: data.total || 0
+  };
 }
 
 export async function createClass(className: string) {

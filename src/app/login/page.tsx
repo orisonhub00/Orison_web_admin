@@ -8,6 +8,7 @@ import { loginAction, loginWithPhoneAction } from "@/actions/auth";
 import { getFirebaseAuth } from "@/lib/firebase"; 
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { setAdminToken } from "@/lib/getToken";
+import LoadingOverlay from "@/components/reuseble_components/LoadingOverlay";
 
 // declare global removed
 
@@ -288,6 +289,7 @@ export default function Login() {
   return (
     // <div className="min-h-screen w-full bg-[#f5f5f5] flex flex-col items-center justify-center px-4">
     <div className="min-h-screen w-full bg-[#f5f5f5] px-4 flex flex-col">
+      {loading && <LoadingOverlay message="Authenticating... Please wait." />}
       {/* MAIN CARD AREA */}
       <div className="flex flex-1 items-center justify-center">
         <div className="w-full max-w-[520px] flex flex-col items-center">

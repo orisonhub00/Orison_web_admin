@@ -8,7 +8,7 @@ export function useClasses() {
 
   useEffect(() => {
     getClasses()
-      .then((data) => setClasses(data))
+      .then((res) => setClasses(res.classes))
       .catch((err) => setError(err))
       .finally(() => setLoading(false));
   }, []);

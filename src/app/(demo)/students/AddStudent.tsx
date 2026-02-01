@@ -25,7 +25,7 @@ export default function AddStudent({
     const fetchData = async () => {
       try {
         // ----- Classes -----
-        const classData = await getClasses();
+        const { classes: classData } = await getClasses();
         const activeClasses = classData
           .filter((cls: any) => cls.status === "active")
           .map((cls: any) => cls.class_name);
