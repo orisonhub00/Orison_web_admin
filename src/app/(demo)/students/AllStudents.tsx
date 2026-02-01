@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { Search, Eye, Pencil, Plus, Layers, Users, ChevronRight, ArrowLeft, ArrowUpDown } from "lucide-react";
-import { BASE_URL, getClasses, getSectionsByClass } from "@/lib/authClient";
-import { getAdminToken } from "@/lib/getToken";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
+import { BASE_URL, getClasses, getSectionsByClass, getClassById } from "@/lib/authClient";
+import { getAdminToken } from "@/lib/getToken";
 
 /* ================= TYPES ================= */
 
@@ -44,6 +44,9 @@ export default function AllStudents({
   onAddStudent,
 }: AllStudentsProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const classIdParam = searchParams.get("class_id");
+  const sectionIdParam = searchParams.get("section_id");
 
   /* ================= STATE ================= */
 
@@ -69,10 +72,59 @@ export default function AllStudents({
   /* ================= INIT ================= */
 
   useEffect(() => {
-    if (currentView === "classes") {
+    if (classIdParam) {
+      handleUrlParams(classIdParam, sectionIdParam);
+    } else if (currentView === "classes") {
       fetchClasses();
     }
-  }, [currentView, page, search]);
+  }, [currentView, page, search, classIdParam, sectionIdParam]);
+
+  const handleUrlParams = async (cId: string, sId: string | null) => {
+    setLoading(true);
+    try {
+      // 1. Fetch Class
+      const clsData = await getClassById(cId);
+      const mappedClass: ClassType = {
+        id: clsData.id,
+        class_name: clsData.class_name,
+        section_count: clsData.section_count || 0,
+        student_count: clsData.student_count || 0,
+      };
+      setSelectedClass(mappedClass);
+
+      // 2. Fetch Sections
+      const resSections = await getSectionsByClass(cId);
+      const fetchedSections = resSections.sections || [];
+      setSections(fetchedSections);
+
+      // 3. Determine View
+      if (sId) {
+        const targetSec = fetchedSections.find((s: any) => s.id === sId);
+        if (targetSec) {
+          setSelectedSection(targetSec);
+          setCurrentView("students");
+        } else if (fetchedSections.length === 0 && mappedClass.student_count > 0) {
+          setSelectedSection(null);
+          setCurrentView("students");
+        } else {
+          setCurrentView("sections");
+        }
+      } else {
+        // No specific section, check if we should skip to students
+        if (fetchedSections.length === 0 && mappedClass.student_count > 0) {
+          setSelectedSection(null);
+          setCurrentView("students");
+        } else {
+          setCurrentView("sections");
+        }
+      }
+    } catch (err) {
+      console.error("Deep link error:", err);
+      if (currentView === "classes") fetchClasses();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchClasses = async () => {
     setLoading(true);
@@ -87,17 +139,25 @@ export default function AllStudents({
     }
   };
 
-  /* ================= FETCH SECTIONS ================= */
-
   const fetchSectionsForClass = async (cls: ClassType) => {
     setLoading(true);
     try {
-      const res = await getSectionsByClass(cls.id);
-      setSections(res.sections || []);
+      const resSections = await getSectionsByClass(cls.id);
+      const fetchedSections = resSections.sections || [];
+      
       setSelectedClass(cls);
-      setCurrentView("sections");
-      setSearch(""); // Reset search when moving to sections
+      setSearch("");
       setPage(1);
+
+      if (fetchedSections.length === 0 && cls.student_count > 0) {
+        setSections([]);
+        setSelectedSection(null);
+        setCurrentView("students");
+        toast.success("No sections found. Showing all students in this class.");
+      } else {
+        setSections(fetchedSections);
+        setCurrentView("sections");
+      }
     } catch (error) {
       toast.error("Failed to load sections");
     } finally {
@@ -108,12 +168,15 @@ export default function AllStudents({
   /* ================= FETCH STUDENTS ================= */
 
   const fetchStudents = async () => {
-    if (!selectedClass || !selectedSection) return;
+    if (!selectedClass) return;
+    // If sections exist but none is selected, don't fetch
+    if (sections.length > 0 && !selectedSection) return;
 
     setLoading(true);
     try {
+      const sectionIdParam = selectedSection?.id || "";
       const res = await fetch(
-        `${BASE_URL}/api/v1/students?class_id=${selectedClass.id}&section_id=${selectedSection.id}&page=${page}&limit=${limit}&search=${search}&sort=${sortField}&order=${sortOrder}`,
+        `${BASE_URL}/api/v1/students?class_id=${selectedClass.id}&section_id=${sectionIdParam}&page=${page}&limit=${limit}&search=${search}&sort=${sortField}&order=${sortOrder}`,
         {
           headers: {
             Authorization: `Bearer ${getAdminToken()}`,
@@ -157,11 +220,21 @@ export default function AllStudents({
   };
 
   const handleBack = () => {
+    // If we came from a deep link, clear it
+    if (classIdParam || sectionIdParam) {
+      router.replace("/students");
+    }
+
     setPage(1);
     setSearch("");
     if (currentView === "students") {
-      setCurrentView("sections");
-      setSelectedSection(null);
+      if (sections.length === 0) {
+        setCurrentView("classes");
+        setSelectedClass(null);
+      } else {
+        setCurrentView("sections");
+        setSelectedSection(null);
+      }
     } else if (currentView === "sections") {
       setCurrentView("classes");
       setSelectedClass(null);

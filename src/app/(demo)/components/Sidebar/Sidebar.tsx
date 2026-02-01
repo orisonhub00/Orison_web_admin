@@ -128,7 +128,7 @@ export default function Sidebar() {
 
       {/* MENU */}
       <div
-        className={`flex-1 px-3 py-5 overflow-y-auto
+        className={`flex-1 px-3 py-5 overflow-y-auto scrollbar-hide
         ${sidebarOpen ? "bg-primary pr-4" : "bg-white pr-2 space-y-2"}`}
       >
         {/* Dashboard */}

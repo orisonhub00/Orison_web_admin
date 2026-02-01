@@ -418,8 +418,8 @@ const sectionMap = Object.fromEntries(
   sections.map(s => [s.id, s.section_name])
 );
 
-console.log("Section Map:", sectionMap);
-console.log("Class Map:", classMap);
+// console.log("Section Map:", sectionMap);
+// console.log("Class Map:", classMap);
 
 
   /* ================= UI ================= */

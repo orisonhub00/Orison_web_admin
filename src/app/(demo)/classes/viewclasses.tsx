@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, Edit2, Trash2 } from "lucide-react";
 import { getClassById, getClasses, deleteClass } from "@/lib/authClient";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 
 
@@ -14,6 +15,8 @@ interface ClassType {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  section_count?: number;
+  student_count?: number;
 }
 
 export default function ViewClasses({
@@ -23,6 +26,7 @@ export default function ViewClasses({
   onBack: () => void;
   onEditClass: (cls: ClassType) => void;
 }) {
+  const router = useRouter(); // Initialize router
   const [classes, setClasses] = useState<ClassType[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState<ClassType | null>(null);
@@ -61,6 +65,18 @@ export default function ViewClasses({
     } finally {
       setDetailLoading(false);
     }
+  };
+
+  /* ---------- HANDLE CLICK ---------- */
+  const handleClassClick = (cls: ClassType) => {
+    // If no sections but students exist, go to student list directly
+    if ((cls.section_count === 0 || !cls.section_count) && ((cls.student_count || 0) > 0)) {
+       toast("No section available in this class. Showing students...", { icon: "ℹ️" });
+       router.push(`/students?class_id=${cls.id}`);
+       return;
+    }
+    // Default behavior
+    fetchClassDetails(cls.id);
   };
 
   /* ---------- DELETE ---------- */
@@ -167,7 +183,7 @@ export default function ViewClasses({
             {classes.map((c) => (
               <div
                 key={c.id}
-                onClick={() => fetchClassDetails(c.id)}
+                onClick={() => handleClassClick(c)}
                 className="grid grid-cols-5 px-6 py-4 items-center text-sm hover:bg-gray-50 cursor-pointer"
               >
                 <div className="col-span-2 font-medium text-gray-900">
