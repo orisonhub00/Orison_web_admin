@@ -39,49 +39,49 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-  :root {
-    --radius: 0.625rem;
+:root {
+  --radius: 0.625rem;
 
-    --background: #ffffff;
-    --foreground: #111827;
+  --background: #ffffff;
+  --foreground: #111827;
 
-    --card: #ffffff;
-    --card-foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
 
-    --popover: #ffffff;
-    --popover-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
 
-    /* ✅ Brand Primary */
-    --primary: #e85222;
-    --primary-foreground: #ffffff;
+  /* ✅ Brand Primary */
+  --primary: #e85222;
+  --primary-foreground: #ffffff;
 
-    --secondary: #f3f4f6;
-    --secondary-foreground: #111827;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #111827;
 
-    --muted: #f9fafb;
-    --muted-foreground: #6b7280;
+  --muted: #f9fafb;
+  --muted-foreground: #6b7280;
 
-    --accent: #fdeee9;
-    --accent-foreground: #111827;
+  --accent: #fdeee9;
+  --accent-foreground: #111827;
 
-    --destructive: #e85222;
+  --destructive: #e85222;
 
-    --border: #e5e7eb;
-    --input: #e5e7eb;
-    --ring: rgba(220, 38, 38, 0.45);
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: rgba(220, 38, 38, 0.45);
 
-    /* ✅ Red Color Palette (your screenshot) */
-    --red-50: #fdeee9;
-    --red-100: #f8c9ba;
-    --red-200: #f4af99;
-    --red-300: #f08b6b;
-    --red-400: #ed754e;
-    --red-500: #e85222;
-    --red-600: #d34b1f;
-    --red-700: #ae3a18;
-    --red-800: #802d13;
-    --red-900: #61220e;
-  }
+  /* ✅ Red Color Palette (your screenshot) */
+  --red-50: #fdeee9;
+  --red-100: #f8c9ba;
+  --red-200: #f4af99;
+  --red-300: #f08b6b;
+  --red-400: #ed754e;
+  --red-500: #e85222;
+  --red-600: #d34b1f;
+  --red-700: #ae3a18;
+  --red-800: #802d13;
+  --red-900: #61220e;
+}
 
 .dark {
   --background: #0b0b0b;
@@ -139,4 +139,19 @@ div[id^="__next-build"] {
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
+}
+
+/* Scrollbar Hide Utility */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+    /* Safari and Chrome */
+  }
 }

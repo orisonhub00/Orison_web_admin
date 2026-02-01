@@ -142,7 +142,6 @@ export async function getSections() {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch sections");
-  toast.success("Sections fetched successfully");
   return data.sections.map((sec: any) => ({
     id: sec.id,
     section_name: sec.section_name,
@@ -163,7 +162,6 @@ export async function getSectionById(id: string) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch section");
-  toast.success("Section fetched successfully");
   return data.section;
 }
 
@@ -250,8 +248,6 @@ export async function getAcademicYears(search = "", page = 1, limit = 20) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch academic years");
-  toast.success
-    ("Academic years fetched successfully");
   return data.data;
 }
 
@@ -265,7 +261,6 @@ export async function getAcademicYearById(id: string) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch academic year");
-  toast.success("Academic year fetched successfully");
   return data.data;
 }
 
@@ -286,7 +281,6 @@ export async function updateAcademicYear(
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to update academic year");
-  toast.success("Academic year updated successfully");
   return data.data;
 }
 
