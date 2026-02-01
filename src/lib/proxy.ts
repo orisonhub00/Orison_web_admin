@@ -11,9 +11,10 @@ export function protectRoutes(request: NextRequest) {
   }
 
   // 2. Auth user trying to access public auth pages -> dashboard
-  // Matches "/" and "/login" (and potentially future public/auth routes)
+  // 2. Auth user trying to access public auth pages -> dashboard
+  // Matches "/login" (and potentially future public/auth routes) - "/" should remains public
   if (token) {
-    if (pathname === "/" || pathname === "/login") {
+    if (pathname === "/login") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
