@@ -110,3 +110,7 @@ export async function loginWithPhoneAction(firebaseToken: string) {
     };
   }
 }
+export async function logoutAction() {
+  (await cookies()).delete("auth_token");
+  return { success: true };
+}

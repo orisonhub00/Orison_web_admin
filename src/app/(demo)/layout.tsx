@@ -2,6 +2,8 @@
 
 import Sidebar from "./components/Sidebar/Sidebar";
 import Navbar from "./components/Navbar/Navbar";
+import Header from "./components/Header/Header";
+import Breadcrumbs from "./components/Breadcrumbs/Breadcrumbs";
 import { usePathname } from "next/navigation";
 
 export default function DemoLayout({
@@ -27,8 +29,12 @@ export default function DemoLayout({
         )}
 
         {/* Main content – changes based on route */}
-        <main className={`flex-1 px-6 py-5 overflow-y-auto ${!showSidebar ? 'w-full' : ''}`}>
-          {children}
+        <main className={`flex-1 overflow-y-auto ${!showSidebar ? 'w-full' : ''}`}>
+          {showSidebar && <Header />}
+          <div className="px-6 py-5">
+            {showSidebar && <Breadcrumbs />}
+            {children}
+          </div>
         </main>
       </div>
     </div>
