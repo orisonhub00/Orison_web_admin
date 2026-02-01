@@ -4,8 +4,12 @@ import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { loginAction } from "@/actions/auth";
+import { loginAction, loginWithPhoneAction } from "@/actions/auth";
+import { getFirebaseAuth } from "@/lib/firebase"; 
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
 import { setAdminToken } from "@/lib/getToken";
+
+// declare global removed
 
 export default function Login() {
   // ✅ Stages
@@ -48,6 +52,7 @@ export default function Login() {
   const [mobile, setMobile] = useState(""); // only digits
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const otpRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   // ---------- Validations ----------
   const isValidEmail = (val: string) =>
@@ -109,12 +114,11 @@ export default function Login() {
 
       console.log("🎯 Login success response:", data);
 
-      // Store token in localStorage for Client-Side API calls
+      // Token is used by client-side APIs
       if (data.token) {
-         setAdminToken(data.token);
-         console.log("🍪 Token stored in localStorage (for API):", data.token);
+        setAdminToken(data.token);
       }
-
+      
       // Optional: store user
       if (data.user) {
         localStorage.setItem("user", JSON.stringify(data.user));
@@ -148,20 +152,114 @@ export default function Login() {
     setConfirmPassword("");
   };
 
-  const handleSendOtp = () => {
-    // reference flow
-    setStage(STAGES.OTP);
-    setOtp(["", "", "", "", "", ""]);
-    setTimeout(() => otpRefs.current[0]?.focus(), 50);
+  const handleSendOtp = async () => {
+    if (loading) return;
+    try {
+      setLoading(true);
+      setError("");
+
+      const phoneNumber = `+91${mobile}`; // Assuming India +91, user input implies 10 digits
+      console.log("📱 Sending OTP to:", phoneNumber);
+
+      // Lazy load auth only when user clicks send
+      const auth = getFirebaseAuth();
+
+      if (!(window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+          size: "invisible",
+          callback: (response: any) => {
+            // reCAPTCHA solved
+            console.log("reCAPTCHA solved");
+          }, 
+        });
+      }
+
+      const appVerifier = (window as any).recaptchaVerifier;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+      
+      setConfirmationResult(confirmation);
+      toast.success("OTP Sent successfully!");
+
+      setStage(STAGES.OTP);
+      setOtp(["", "", "", "", "", ""]);
+      setTimeout(() => otpRefs.current[0]?.focus(), 50);
+
+    } catch (err: any) {
+      console.error("❌ Send OTP failed:", err);
+      
+      let friendlyMessage = "Failed to send OTP";
+      if (err.code === "auth/billing-not-enabled") {
+        friendlyMessage = "Firebase SMS requires billing or Test Numbers. Please use a Test Phone Number (see walkthrough).";
+      } else if (err.code === "auth/invalid-api-key") {
+        friendlyMessage = "Firebase Configuration Error: Invalid API Key.";
+      } else {
+        friendlyMessage = err.message || "Something went wrong";
+      }
+
+      setError(friendlyMessage);
+      toast.error(friendlyMessage);
+
+      if ((window as any).recaptchaVerifier) {
+        try {
+          (window as any).recaptchaVerifier.clear();
+        } catch (e) {
+          console.warn("reCAPTCHA clear failed:", e);
+        }
+        (window as any).recaptchaVerifier = null;
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerifyOtp = () => {
-    toast.error(`✅ Logged in as ${role.toUpperCase()} with MOBILE: +91${mobile}`);
+  const handleVerifyOtp = async () => {
+    if (!confirmationResult) {
+      setError("Session expired. Please request OTP again.");
+      return;
+    }
 
-    if (role === "admin") {
+    try {
+      setLoading(true);
+      setError("");
+      
+      const otpValue = otp.join("");
+      console.log("🔢 Verifying OTP...");
+
+      // 1. Verify with Firebase
+      const result = await confirmationResult.confirm(otpValue);
+      const user = result.user;
+      console.log("✅ Firebase Auth Success:", user.uid);
+
+      // 2. Get ID Token
+      const idToken = await user.getIdToken();
+
+      // 3. Verify with Backend via Server Action
+      const data = await loginWithPhoneAction(idToken);
+
+      if (!data.success) {
+        throw new Error(data.message || "Backend verification failed");
+      }
+
+      console.log("🎯 Backend Login Success:", data);
+
+      // 4. Store token for client-side API calls
+      if (data.token) {
+        setAdminToken(data.token);
+      }
+
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+
+      toast.success("Login successful!");
       router.push("/dashboard");
-    } else {
-      router.push("/principal-dashboard");
+
+    } catch (err: any) {
+      console.error("❌ OTP Verification failed:", err);
+      setError(err.message || "Invalid OTP");
+      toast.error(err.message || "Invalid OTP");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -499,16 +597,16 @@ export default function Login() {
                 </div>
 
                 <button
-                  disabled={!isMobileValid}
+                  disabled={!isMobileValid || loading}
                   onClick={handleSendOtp}
                   className={`w-full rounded-md px-4 py-2 text-[12px] font-semibold transition
                   ${
-                    !isMobileValid
+                    !isMobileValid || loading
                       ? "bg-gray-200 text-gray-400"
                       : "bg-primary text-white hover:opacity-90"
                   }`}
                 >
-                  Get Otp
+                  {loading ? "Sending..." : "Get Otp"}
                 </button>
 
                 <button
@@ -574,6 +672,7 @@ export default function Login() {
       <div className="pb-6 text-center text-[12px] text-primary">
         © Copyright 2025 Orison services
       </div>
+      <div id="recaptcha-container"></div>
     </div>
   );
 }

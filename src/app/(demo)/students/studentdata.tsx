@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, Download, Upload as UploadIcon } from "lucide-react";
+import { ChevronLeft, Download, Upload as UploadIcon, Trash2 } from "lucide-react";
 import { getClasses, getSectionsByClass, BASE_URL, getAcademicYears } from "@/lib/authClient";
 import { getAdminToken } from "@/lib/getToken";
 
 import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
 
 
 /* ================= TYPES ================= */
@@ -32,6 +33,8 @@ type Batch = {
   class_id: string;
   section_id: string | null;
   status: "pending" | "processing" | "failed" | "completed";
+  success_count: number | null;
+  failed_count: number | null;
   createdAt: string;
 };
 
@@ -49,10 +52,15 @@ const [selectedYear, setSelectedYear] = useState<string>(""); // stores ID
 
   const [batches, setBatches] = useState<Batch[]>([]);
   const [activeBatch, setActiveBatch] = useState<Batch | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [files, setFiles] = useState<File[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
 const router = useRouter();
 
@@ -63,12 +71,87 @@ const router = useRouter();
     setTimeout(() => setToast(null), 3000);
   };
 
-  const reloadBatches = async () => {
-    const res = await fetch(`${BASE_URL}/api/v1/studentbatches`, {
-      headers: { Authorization: `Bearer ${getAdminToken()}` },
+  const reloadBatches = async (p = 1) => {
+    try {
+      let url = `${BASE_URL}/api/v1/studentbatches?page=${p}&limit=5`;
+      if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
+      if (statusFilter) url += `&status=${statusFilter}`;
+
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+      });
+      const data = await res.json();
+      setBatches(data.batches || []);
+      setTotalPages(data.pagination?.totalPages || 1);
+      setPage(p);
+    } catch (err) {
+      console.error("Failed to load batches:", err);
+    }
+  };
+
+  const downloadErrors = async (batchId: string) => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/v1/studentbatches/${batchId}/errors`, {
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+      });
+      if (!res.ok) {
+        showToast("❌ No error report available");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      // Get filename from response header
+      const disposition = res.headers.get("Content-Disposition");
+      let filename = `errors_batch_${batchId}.xlsx`; // fallback
+      if (disposition && disposition.indexOf("attachment") !== -1) {
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        const matches = filenameRegex.exec(disposition);
+        if (matches != null && matches[1]) {
+          filename = matches[1].replace(/['"]/g, "");
+        }
+      }
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+    } catch (err) {
+      console.error("Error downloading error sheet:", err);
+      showToast("❌ Failed to download error sheet");
+    }
+  };
+
+  const handleDeleteBatch = async (batchId: string) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This will delete the batch and ALL associated students. This action cannot be undone!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel"
     });
-    const data = await res.json();
-    setBatches(data.batches || []);
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/v1/studentbatches/${batchId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+      });
+
+      if (res.ok) {
+        Swal.fire("Deleted!", "The batch and students have been removed.", "success");
+        reloadBatches(page);
+      } else {
+        Swal.fire("Error", "Failed to delete batch.", "error");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      Swal.fire("Error", "An unexpected error occurred.", "error");
+    }
   };
 
   const academicYearMap = Object.fromEntries(
@@ -135,9 +218,20 @@ const router = useRouter();
     const blob = await fileRes.blob();
     const url = URL.createObjectURL(blob);
 
+    // Get filename from response header
+    const disposition = fileRes.headers.get("Content-Disposition");
+    let filename = `students_${batch.id}.xlsx`; // fallback
+    if (disposition && disposition.indexOf("attachment") !== -1) {
+      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+      const matches = filenameRegex.exec(disposition);
+      if (matches != null && matches[1]) {
+        filename = matches[1].replace(/['"]/g, "");
+      }
+    }
+
     const a = document.createElement("a");
     a.href = url;
-    a.download = `students_${batch.id}.xlsx`;
+    a.download = filename;
     a.click();
 
     reloadBatches();
@@ -206,14 +300,21 @@ const handleUpload = async () => {
     console.groupEnd();
 
     if (res.status === 201 || res.status === 200) {
-      showToast("🎉 Students uploaded successfully");
+      const data = JSON.parse(text);
+      const { success_count, failed_count } = data.data || {};
+      
+      const msg = `🎉 Processed: ${success_count} Added, ${failed_count} Failed. ${failed_count > 0 ? "Check history to download error sheet." : ""}`;
+      showToast(msg);
+
       setActiveBatch(null);
       setFiles([]);
-      reloadBatches();
-       router.push(
-    `/students?class_id=${activeBatch.class_id}&section_id=${activeBatch.section_id ?? ""}`
-  );
+      reloadBatches(1);
 
+      if (failed_count === 0) {
+        router.push(
+          `/students?class_id=${activeBatch.class_id}&section_id=${activeBatch.section_id ?? ""}`
+        );
+      }
       return;
     }
 
@@ -286,7 +387,7 @@ return (
 
     {/* HEADER */}
     <div className="bg-white rounded-2xl border px-6 py-4 mb-6 flex items-center gap-4">
-      <button onClick={onBack} className="h-9 w-9 border rounded-full">
+      <button onClick={onBack} className="h-9 w-9 border rounded-full cursor-pointer hover:bg-gray-50 transition-colors">
         <ChevronLeft size={16} />
       </button>
       <div>
@@ -308,7 +409,7 @@ return (
           <select
   value={selectedYear}
   onChange={(e) => setSelectedYear(e.target.value)}
-  className="border rounded-full px-4 py-3"
+  className="border rounded-full px-4 py-3 cursor-pointer"
 >
   <option value="">Academic Year</option>
   {academicYears.map((y) => (
@@ -321,7 +422,7 @@ return (
           <select
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
-            className="border rounded-full px-4 py-3"
+            className="border rounded-full px-4 py-3 cursor-pointer"
           >
             <option value="">Select Class</option>
             {classes.map((c) => (
@@ -335,7 +436,7 @@ return (
             value={selectedSection}
             onChange={(e) => setSelectedSection(e.target.value)}
             disabled={!sections.length}
-            className="border rounded-full px-4 py-3"
+            className="border rounded-full px-4 py-3 cursor-pointer disabled:cursor-not-allowed"
           >
             <option value="">Section</option>
             {sections.map((s) => (
@@ -347,7 +448,7 @@ return (
 
           <button
             onClick={handleDownload}
-            className="rounded-full bg-orange-500 hover:bg-orange-600 text-white font-semibold flex items-center justify-center gap-2"
+            className="rounded-full bg-orange-500 hover:bg-orange-600 text-white font-semibold flex items-center justify-center gap-2 cursor-pointer"
           >
             <Download size={18} /> Download Excel
           </button>
@@ -401,7 +502,7 @@ return (
           <button
             onClick={handleUpload}
             disabled={!activeBatch || !files.length}
-            className="h-[52px] rounded-full bg-blue-600 text-white font-semibold disabled:opacity-40"
+            className="h-[52px] rounded-full bg-blue-600 text-white font-semibold disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
           >
             Upload
           </button>
@@ -409,65 +510,152 @@ return (
       </div>
 
       {/* ================= BATCH TABLE ================= */}
-      <div>
-        <h3 className="font-semibold mb-3">Upload History</h3>
+      <div className="mt-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-3">
+          <h3 className="font-semibold text-lg">Upload History</h3>
+          
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <input 
+              type="text" 
+              placeholder="Search by ID..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && reloadBatches(1)}
+              className="px-3 py-1.5 border rounded-lg text-sm w-full md:w-64 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-1.5 border rounded-lg text-sm cursor-pointer focus:outline-none"
+            >
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="completed">Completed</option>
+              <option value="failed">Failed</option>
+            </select>
+
+            <button 
+              onClick={() => reloadBatches(1)}
+              className="px-4 py-1.5 bg-gray-800 text-white text-sm rounded-lg hover:bg-black transition-colors"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
 
         <table className="w-full border rounded-xl overflow-hidden text-sm">
           <thead className="bg-gray-100">
             <tr>
+              <th className="p-3 text-left w-12">#</th>
               <th className="p-3 text-left">Class</th>
               <th className="p-3 text-center">Year</th>
               <th className="p-3 text-center">Section</th>
+              <th className="p-3 text-center cursor-help" title="Successfully added students">Success</th>
+              <th className="p-3 text-center cursor-help" title="Rows that failed validation">Failed</th>
               <th className="p-3 text-center">Status</th>
-              <th className="p-3 text-center">Action</th>
+              <th className="p-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {batches.map((batch) => (
-              <tr key={batch.id} className="border-t">
-                <td className="p-3">
-                  {classMap[batch.class_id] || "-"}
+            {batches.map((batch, index) => (
+              <tr key={batch.id} className="border-t hover:bg-gray-50">
+                <td className="p-3 text-gray-400">{(page - 1) * 5 + index + 1}</td>
+                <td className="p-3 font-medium">
+                  {classMap[batch.class_id] || "Class " + batch.class_id}
                 </td>
 
                 <td className="p-3 text-center"> {academicYearMap[batch.academic_year_id] || "-"}</td>
                 <td className="p-3 text-center">{batch.section_id ? sectionMap[batch.section_id] || "-" : "-"}</td>
-                <td className="p-3 text-center">
-                  {batch.status === "pending" && "⏳ Pending"}
-                  {batch.status === "processing" && "⚙️ Processing"}
-                  {batch.status === "failed" && "❌ Failed"}
-                  {batch.status === "completed" && "✅ Completed"}
+                <td className="p-3 text-center font-bold text-green-600">
+                  {batch.success_count ?? (batch.status === "completed" ? "-" : 0)}
+                </td>
+                <td className="p-3 text-center font-bold text-red-600">
+                  {batch.failed_count ?? 0}
                 </td>
                 <td className="p-3 text-center">
-                  {batch.status === "pending" && (
+                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                    batch.status === "completed" ? "bg-green-100 text-green-700" :
+                    batch.status === "failed" ? "bg-red-100 text-red-700" :
+                    "bg-blue-100 text-blue-700"
+                  }`}>
+                    {batch.status}
+                  </span>
+                </td>
+                <td className="p-3 text-center">
+                  <div className="flex gap-3 justify-end items-center">
+                    {batch.status === "pending" && (
+                      <button
+                        onClick={() => {
+                          setActiveBatch(batch);
+                          setFiles([]);
+                          setTimeout(() => fileInputRef.current?.click(), 0);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 font-semibold cursor-pointer text-xs"
+                      >
+                        Upload
+                      </button>
+                    )}
+                    {batch.status === "failed" && (
+                      <button
+                        onClick={() => {
+                          setActiveBatch(batch);
+                          showToast("Select corrected Excel and click Upload");
+                          fileInputRef.current?.click();
+                        }}
+                        className="text-red-600 hover:text-red-800 font-semibold cursor-pointer text-xs"
+                      >
+                        Retry
+                      </button>
+                    )}
+                    {(batch.failed_count ?? 0) > 0 && (
+                      <button
+                        onClick={() => downloadErrors(batch.id)}
+                        className="text-orange-600 hover:text-orange-800 font-semibold flex items-center gap-1 cursor-pointer text-xs"
+                        title="Download Error Report"
+                      >
+                         Errors
+                      </button>
+                    )}
                     <button
-                      onClick={() => {
-                        setActiveBatch(batch);
-                        setFiles([]);
-                        setTimeout(() => fileInputRef.current?.click(), 0);
-                      }}
-                      className="text-blue-600 hover:underline"
-                    >
-                      Upload
+                        onClick={() => handleDeleteBatch(batch.id)}
+                        className="text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                        title="Delete Batch Record"
+                      >
+                         <Trash2 size={16} />
                     </button>
-                  )}
-                  {batch.status === "failed" && (
-                    <button
-                      onClick={() => {
-                        setActiveBatch(batch);
-                        showToast("Select corrected Excel file and click Upload");
-                        fileInputRef.current?.click();
-                      }}
-                      className="text-red-600 hover:underline"
-                    >
-                      Retry
-                    </button>
-
-                  )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center mt-4 px-2">
+            <p className="text-xs text-gray-500 italic">
+              Showing page {page} of {totalPages}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => reloadBatches(page - 1)}
+                disabled={page === 1}
+                className="px-4 py-1.5 border rounded-full text-xs font-semibold disabled:opacity-30 hover:bg-gray-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => reloadBatches(page + 1)}
+                disabled={page === totalPages}
+                className="px-4 py-1.5 border rounded-full text-xs font-semibold disabled:opacity-30 hover:bg-gray-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
     </div>
