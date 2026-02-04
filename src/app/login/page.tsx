@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { loginAction, loginWithPhoneAction } from "@/actions/auth";
@@ -89,6 +89,19 @@ export default function Login() {
     () => otpString.length === 6 && /^\d{6}$/.test(otpString),
     [otpString]
   );
+  
+  // ---------- Recaptcha Initialization ----------
+  // Removed global useEffect initialization to avoid double-init conflicts.
+  // We initialize strictly when needed in handleSendOtp.
+  useEffect(() => {
+    return () => {
+       if ((window as any).recaptchaVerifier) {
+          try {
+             (window as any).recaptchaVerifier.clear();
+          } catch(e) {}
+       }
+    }
+  }, []);
 
   // ---------- Actions (Demo Only) ----------
   const handleGoSelectMethod = () => {
@@ -162,18 +175,22 @@ export default function Login() {
       const phoneNumber = `+91${mobile}`; // Assuming India +91, user input implies 10 digits
       console.log("📱 Sending OTP to:", phoneNumber);
 
-      // Lazy load auth only when user clicks send
       const auth = getFirebaseAuth();
-
-      if (!(window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-          size: "invisible",
-          callback: (response: any) => {
-            // reCAPTCHA solved
-            console.log("reCAPTCHA solved");
-          }, 
-        });
+      if (!auth) {
+        throw new Error("Firebase Auth not initialized (SSR?)");
       }
+
+      // Ensure verifier exists
+      // We clear old verifiers to avoid "reCAPTCHA has already been rendered in this element"
+      if ((window as any).recaptchaVerifier) {
+          try {
+             (window as any).recaptchaVerifier.clear();
+          } catch(e) { console.warn("clearing old recaptcha failed", e)}
+      }
+
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+      });
 
       const appVerifier = (window as any).recaptchaVerifier;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
@@ -190,9 +207,16 @@ export default function Login() {
       
       let friendlyMessage = "Failed to send OTP";
       if (err.code === "auth/billing-not-enabled") {
-        friendlyMessage = "Firebase SMS requires billing or Test Numbers. Please use a Test Phone Number (see walkthrough).";
+        friendlyMessage = "Firebase SMS requires billing or Test Numbers.";
       } else if (err.code === "auth/invalid-api-key") {
         friendlyMessage = "Firebase Configuration Error: Invalid API Key.";
+      } else if (err.code === "auth/invalid-app-credential") {
+         // This is the specific error for Domain mismatch
+         console.error("⚠️ AUTH DOMAIN MISMATCH LIKELY.");
+         console.error("Current Hostname:", window.location.hostname);
+         friendlyMessage = `Security Error: This domain (${window.location.hostname}) is not authorized in Firebase Console -> Authentication -> Settings -> Authorized Domains.`;
+      } else if (err.code === "auth/too-many-requests") {
+          friendlyMessage = "Too many requests. Please try again later.";
       } else {
         friendlyMessage = err.message || "Something went wrong";
       }
@@ -200,13 +224,14 @@ export default function Login() {
       setError(friendlyMessage);
       toast.error(friendlyMessage);
 
+      // Clear verifier on error so we can try again clean
       if ((window as any).recaptchaVerifier) {
         try {
           (window as any).recaptchaVerifier.clear();
+          (window as any).recaptchaVerifier = null;
         } catch (e) {
           console.warn("reCAPTCHA clear failed:", e);
         }
-        (window as any).recaptchaVerifier = null;
       }
     } finally {
       setLoading(false);
