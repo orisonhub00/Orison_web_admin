@@ -393,7 +393,7 @@ export default function AllStudents({
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -508,7 +508,7 @@ export default function AllStudents({
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
           {/* Universal Search bar for Classes and Students */}
           {currentView !== "sections" && (
             <div className="relative">
@@ -520,14 +520,14 @@ export default function AllStudents({
                   setPage(1);
                   setSearch(e.target.value);
                 }}
-                className="pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[#ff6b35] focus:outline-none w-64 transition-all"
+                className="pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-[#ff6b35] focus:outline-none w-full sm:w-64 transition-all"
               />
             </div>
           )}
 
           <button
             onClick={onAddStudent}
-            className="flex items-center gap-2 px-6 py-2.5 text-[12px] font-bold rounded-xl bg-[#ff6b35] text-white hover:bg-[#e85f2e] transition-all shadow-lg shadow-orange-100 whitespace-nowrap"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 text-[12px] font-bold rounded-xl bg-[#ff6b35] text-white hover:bg-[#e85f2e] transition-all shadow-lg shadow-orange-100 whitespace-nowrap w-full sm:w-auto"
           >
             <Plus size={16} />
             ADD NEW STUDENT

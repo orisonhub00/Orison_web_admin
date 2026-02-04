@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { User, LogOut, UserCircle } from "lucide-react";
+import { User, LogOut, UserCircle, Menu } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { logoutAction } from "@/actions/auth";
 import { removeAdminToken } from "@/lib/getToken";
 import Swal from "sweetalert2";
 
-export default function Header() {
+export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [adminData, setAdminData] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -59,7 +59,13 @@ export default function Header() {
 
   return (
     <header className="h-16 bg-white border-b border-border flex items-center justify-between px-6 sticky top-0 z-40">
-      <div className="flex-1">
+      <div className="flex-1 flex items-center gap-4">
+        <button 
+          onClick={onMenuClick}
+          className="md:hidden p-2 -ml-2 hover:bg-gray-100 rounded-lg text-gray-600"
+        >
+          <Menu size={24} />
+        </button>
         <h1 className="text-xl font-bold text-gray-800 tracking-tight">
           {getPageTitle(pathname)}
         </h1>
@@ -91,7 +97,13 @@ export default function Header() {
             </div>
             
             <div className="p-2">
-              <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-primary/5 hover:text-primary rounded-xl transition-colors cursor-pointer">
+              <button 
+                onClick={() => {
+                  setShowDropdown(false);
+                  router.push("/profile");
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-primary/5 hover:text-primary rounded-xl transition-colors cursor-pointer"
+              >
                 <UserCircle size={18} />
                 Profile Details
               </button>

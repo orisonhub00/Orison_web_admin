@@ -456,22 +456,22 @@ return (
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <select
-  value={selectedYear}
-  onChange={(e) => setSelectedYear(e.target.value)}
-  className="border rounded-full px-4 py-3 cursor-pointer"
->
-  <option value="">Academic Year</option>
-  {academicYears.map((y) => (
-    <option key={y.id} value={y.id}>
-      {y.year_name}
-    </option>
-  ))}
-</select>
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="border border-gray-300 rounded-full px-4 py-3 cursor-pointer focus:ring-2 focus:ring-[#ff6b35] focus:border-[#ff6b35] outline-none transition-all"
+          >
+            <option value="">Academic Year</option>
+            {academicYears.map((y) => (
+              <option key={y.id} value={y.id}>
+                {y.year_name}
+              </option>
+            ))}
+          </select>
 
           <select
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
-            className="border rounded-full px-4 py-3 cursor-pointer"
+            className="border border-gray-300 rounded-full px-4 py-3 cursor-pointer focus:ring-2 focus:ring-[#ff6b35] focus:border-[#ff6b35] outline-none transition-all"
           >
             <option value="">Select Class</option>
             {classes.map((c) => (
@@ -485,7 +485,7 @@ return (
             value={selectedSection}
             onChange={(e) => setSelectedSection(e.target.value)}
             disabled={!sections.length}
-            className="border rounded-full px-4 py-3 cursor-pointer disabled:cursor-not-allowed"
+            className="border border-gray-300 rounded-full px-4 py-3 cursor-pointer disabled:cursor-not-allowed focus:ring-2 focus:ring-[#ff6b35] focus:border-[#ff6b35] outline-none transition-all"
           >
             <option value="">Section</option>
             {sections.map((s) => (
@@ -497,7 +497,7 @@ return (
 
           <button
             onClick={handleDownload}
-            className="rounded-full bg-orange-500 hover:bg-orange-600 text-white font-semibold flex items-center justify-center gap-2 cursor-pointer"
+            className="rounded-full bg-[#ff6b35] hover:bg-[#e85f2e] text-white font-semibold flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-orange-100 transition-all"
           >
             <Download size={18} /> Download Excel
           </button>
@@ -533,10 +533,15 @@ return (
           `}
         >
           <UploadIcon className="inline mr-2" size={16} />
-          {files[0]?.name ?? (
-            activeBatch
+          {files[0] ? (
+            <span className="block truncate max-w-[200px] mx-auto text-sm font-medium text-[#ff6b35]">
+              {files[0].name}
+            </span>
+          ) : (
+             activeBatch
               ? "Choose Excel for selected batch"
-              : "Select a batch first")}
+              : "Select a batch first"
+          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -551,7 +556,7 @@ return (
           <button
             onClick={handleUpload}
             disabled={!activeBatch || !files.length}
-            className="h-[52px] rounded-full bg-blue-600 text-white font-semibold disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+            className="h-[52px] rounded-full bg-[#ff6b35] hover:bg-[#e85f2e] text-white font-semibold disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed shadow-lg shadow-orange-100 transition-all"
           >
             Upload
           </button>
@@ -570,13 +575,13 @@ return (
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && reloadBatches(1)}
-              className="px-3 py-1.5 border rounded-lg text-sm w-full md:w-64 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-[#ff6b35] focus:border-[#ff6b35] transition-all"
             />
             
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-1.5 border rounded-lg text-sm cursor-pointer focus:outline-none"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#ff6b35] focus:border-[#ff6b35] transition-all"
             >
               <option value="">All Status</option>
               <option value="pending">Pending</option>
@@ -594,8 +599,9 @@ return (
           </div>
         </div>
 
-        <table className="w-full border rounded-xl overflow-hidden text-sm">
-          <thead className="bg-gray-100">
+        <div className="overflow-x-auto border rounded-xl">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-100">
             <tr>
               <th className="p-3 text-left w-12">#</th>
               <th className="p-3 text-left">Class</th>
@@ -627,7 +633,7 @@ return (
                   <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
                     batch.status === "completed" ? "bg-green-100 text-green-700" :
                     batch.status === "failed" ? "bg-red-100 text-red-700" :
-                    "bg-blue-100 text-blue-700"
+                    "bg-orange-100 text-orange-700"
                   }`}>
                     {batch.status}
                   </span>
@@ -641,7 +647,7 @@ return (
                           setFiles([]);
                           setTimeout(() => fileInputRef.current?.click(), 0);
                         }}
-                        className="text-blue-600 hover:text-blue-800 font-semibold cursor-pointer text-xs"
+                        className="text-[#ff6b35] hover:text-[#e85f2e] font-semibold cursor-pointer text-xs"
                       >
                         Upload
                       </button>
@@ -655,12 +661,12 @@ return (
                             text: "Please download the Error report, fix the highlighted fields in red, and then select the corrected file to re-upload.",
                             icon: "info",
                             confirmButtonText: "Select Corrected File",
-                            confirmButtonColor: "#3b82f6"
+                            confirmButtonColor: "#ff6b35"
                           });
                           setFiles([]);
                           fileInputRef.current?.click();
                         }}
-                        className="text-blue-600 hover:text-blue-800 font-bold px-2 py-1 bg-blue-50 rounded cursor-pointer text-xs flex items-center gap-1"
+                        className="text-[#ff6b35] hover:text-[#e85f2e] font-bold px-2 py-1 bg-orange-50 rounded cursor-pointer text-xs flex items-center gap-1"
                       >
                          Retry
                       </button>
@@ -687,6 +693,7 @@ return (
             ))}
           </tbody>
         </table>
+        </div>
 
         {/* PAGINATION */}
         {totalPages > 1 && (
