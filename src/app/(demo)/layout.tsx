@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Sidebar from "./components/Sidebar/Sidebar";
 import Navbar from "./components/Navbar/Navbar";
 import Header from "./components/Header/Header";
@@ -11,6 +12,7 @@ export default function DemoLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   // Show Navbar only on public homepage (or other future public pages)
   const showNavbar = pathname === '/homepage';
@@ -23,14 +25,14 @@ export default function DemoLayout({
       <div className="flex w-full bg-[#f7ebe7] flex-1">
         {/* Sidebar – Fixed and always visible */}
         {showSidebar && (
-            <div className="h-screen sticky top-0">
-              <Sidebar />
+            <div className="h-screen sticky top-0 z-50">
+              <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
             </div>
         )}
 
         {/* Main content – changes based on route */}
         <main className={`flex-1 overflow-y-auto ${!showSidebar ? 'w-full' : ''}`}>
-          {showSidebar && <Header />}
+          {showSidebar && <Header onMenuClick={() => setMobileOpen(true)} />}
           <div className="px-6 py-5">
             {showSidebar && <Breadcrumbs />}
             {children}

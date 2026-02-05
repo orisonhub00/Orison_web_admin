@@ -21,7 +21,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function Sidebar() {
+export default function Sidebar({ 
+  mobileOpen, 
+  setMobileOpen 
+}: { 
+  mobileOpen: boolean; 
+  setMobileOpen: (open: boolean) => void 
+}) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [studentsOpen, setStudentsOpen] = useState(false);
   const [academicsOpen, setAcademicsOpen] = useState(false);
@@ -82,165 +88,175 @@ export default function Sidebar() {
   }
 
   return (
-    <aside
-      className={`relative h-screen transition-all duration-300 flex flex-col
-      ${sidebarOpen ? "w-65" : "w-18"}
-      bg-white border-r border-border`}
-    >
-      {/* LOGO */}
-    {/* LOGO */}
-<div className="flex items-center justify-center h-22.5 bg-white border-b border-border">
-  {sidebarOpen ? (
-    <Image
-      src="/logo.png"
-      alt="Logo"
-      width={150}
-      height={50}
-      className="h-12 w-auto object-contain"
-      priority
-    />
-  ) : (
-    <Image
-      src="/icons/sidebar/dashboard.png"
-      alt="Sidebar Icon"
-      width={40}
-      height={40}
-      className="h-10 w-10 object-contain"
-      priority
-    />
-  )}
-</div>
-
-
-      {/* TOGGLE */}
-      <button
-        onClick={() => {
-          setSidebarOpen(!sidebarOpen);
-          setStudentsOpen(false);
-          setAcademicsOpen(false);
-        }}
-        className="absolute top-1/2 -right-4 -translate-y-1/2 z-50
-                   h-8 w-8 rounded-full bg-white border border-border shadow
-                   flex items-center justify-center"
-      >
-        {sidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-      </button>
-
-      {/* MENU */}
-      <div
-        className={`flex-1 px-3 py-5 overflow-y-auto scrollbar-hide
-        ${sidebarOpen ? "bg-primary pr-4" : "bg-white pr-2 space-y-2"}`}
-      >
-        {/* Dashboard */}
-        <SidebarItem
-          icon={<Gauge size={18} />}
-          label="Dashboard"
-          open={sidebarOpen}
-          href="/dashboard"
+    <>
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden animate-in fade-in"
+          onClick={() => setMobileOpen(false)}
         />
+      )}
 
-        {/* Students */}
-        <div
-          className={`rounded-2xl transition mb-4
-          ${sidebarOpen ? "bg-[#fde8df] shadow" : ""}`}
-        >
-          <button
-            onClick={() => sidebarOpen && setStudentsOpen(!studentsOpen)}
-            className={`w-full flex items-center transition
-            ${sidebarOpen ? "gap-3 px-3 py-2" : "justify-center py-3"}`}
-          >
-            <div
-              className={`flex items-center justify-center rounded-full bg-primary/20
-              ${sidebarOpen ? "h-8 w-8" : "h-11 w-11"}`}
-            >
-              <UserSquare2 size={sidebarOpen ? 16 : 20} />
-            </div>
-
-            {sidebarOpen && (
-              <>
-                <span className="text-sm font-semibold flex-1 text-left">
-                  Students
-                </span>
-                <ChevronDown
-                  size={16}
-                  className={`transition ${
-                    studentsOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </>
-            )}
-          </button>
-
-          {sidebarOpen && studentsOpen && (
-            <div className="mt-3 px-2">
-              <SidebarSubItem label="Add Student" href="/students/add" />
-              <SidebarSubItem label="View Students" href="/students" />
-            </div>
+      <aside
+        className={`fixed top-0 left-0 h-screen z-50 bg-white border-r border-border flex flex-col transition-all duration-300
+        md:relative md:translate-x-0
+        ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+        ${sidebarOpen ? "w-65" : "w-18"}
+        `}
+      >
+        {/* LOGO */}
+        <div className="flex items-center justify-center h-22.5 bg-white border-b border-border shrink-0 py-4">
+          {sidebarOpen ? (
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={150}
+              height={50}
+              className="h-12 w-auto object-contain"
+              priority
+            />
+          ) : (
+            <Image
+              src="/icons/sidebar/dashboard.png"
+              alt="Sidebar Icon"
+              width={40}
+              height={40}
+              className="h-10 w-10 object-contain"
+              priority
+            />
           )}
         </div>
 
-        {/* Academics */}
-        <div
-          className={`rounded-2xl transition mb-4
-          ${sidebarOpen ? "bg-[#fde8df] shadow" : ""}`}
+        {/* TOGGLE (Desktop Only or inside drawer) */}
+        <button
+          onClick={() => {
+            setSidebarOpen(!sidebarOpen);
+            setStudentsOpen(false);
+            setAcademicsOpen(false);
+          }}
+          className="absolute top-1/2 -right-4 -translate-y-1/2 z-50
+                     h-8 w-8 rounded-full bg-white border border-border shadow
+                     items-center justify-center hidden md:flex"
         >
-          <button
-            onClick={() => sidebarOpen && setAcademicsOpen(!academicsOpen)}
-            className={`w-full flex items-center transition
-            ${sidebarOpen ? "gap-3 px-3 py-2" : "justify-center py-3"}`}
+          {sidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+        </button>
+
+        {/* MENU */}
+        <div
+          className={`flex-1 px-3 py-5 overflow-y-auto scrollbar-hide
+          ${sidebarOpen ? "bg-primary pr-4" : "bg-white pr-2 space-y-2"}`}
+        >
+          {/* Dashboard */}
+          <SidebarItem
+            icon={<Gauge size={18} />}
+            label="Dashboard"
+            open={sidebarOpen}
+            href="/dashboard"
+          />
+
+          {/* Students */}
+          <div
+            className={`rounded-2xl transition mb-4
+            ${sidebarOpen ? "bg-[#fde8df] shadow" : ""}`}
           >
-            <div
-              className={`flex items-center justify-center rounded-full bg-primary/20
-              ${sidebarOpen ? "h-8 w-8" : "h-11 w-11"}`}
+            <button
+              onClick={() => sidebarOpen && setStudentsOpen(!studentsOpen)}
+              className={`w-full flex items-center transition
+              ${sidebarOpen ? "gap-3 px-3 py-2" : "justify-center py-3"}`}
             >
-              <LibraryBig size={sidebarOpen ? 16 : 20} />
-            </div>
+              <div
+                className={`flex items-center justify-center rounded-full bg-primary/20
+                ${sidebarOpen ? "h-8 w-8" : "h-11 w-11"}`}
+              >
+                <UserSquare2 size={sidebarOpen ? 16 : 20} />
+              </div>
 
-            {sidebarOpen && (
-              <>
-                <span className="text-sm font-semibold flex-1 text-left">
-                  Academics
-                </span>
-                <ChevronDown
-                  size={16}
-                  className={academicsOpen ? "rotate-180" : ""}
-                />
-              </>
+              {sidebarOpen && (
+                <>
+                  <span className="text-sm font-semibold flex-1 text-left">
+                    Students
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={`transition ${
+                      studentsOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </>
+              )}
+            </button>
+
+            {sidebarOpen && studentsOpen && (
+              <div className="mt-3 px-2">
+                <SidebarSubItem label="Add Student" href="/students/add" />
+                <SidebarSubItem label="View Students" href="/students" />
+              </div>
             )}
-          </button>
+          </div>
 
-          {sidebarOpen && academicsOpen && (
-            <div className="mt-3 px-2">
-              <SidebarSubItem label="Create Class" href="/classes/create" />
-              <SidebarSubItem label="View Classes" href="/classes" />
-              <SidebarSubItem label="Create Section" href="/sections/create" />
-              <SidebarSubItem label="View Sections" href="/sections" />
-              <SidebarSubItem
-                label="Create Academic Year"
-                href="/academicyears/create"
-              />
-              <SidebarSubItem
-                label="View Academic Years"
-                href="/academicyears"
-              />
-              <SidebarSubItem
-                label="Assign Class Sections"
-                href="/academics/classsections"
-              />
-            </div>
-          )}
+          {/* Academics */}
+          <div
+            className={`rounded-2xl transition mb-4
+            ${sidebarOpen ? "bg-[#fde8df] shadow" : ""}`}
+          >
+            <button
+              onClick={() => sidebarOpen && setAcademicsOpen(!academicsOpen)}
+              className={`w-full flex items-center transition
+              ${sidebarOpen ? "gap-3 px-3 py-2" : "justify-center py-3"}`}
+            >
+              <div
+                className={`flex items-center justify-center rounded-full bg-primary/20
+                ${sidebarOpen ? "h-8 w-8" : "h-11 w-11"}`}
+              >
+                <LibraryBig size={sidebarOpen ? 16 : 20} />
+              </div>
+
+              {sidebarOpen && (
+                <>
+                  <span className="text-sm font-semibold flex-1 text-left">
+                    Academics
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={academicsOpen ? "rotate-180" : ""}
+                  />
+                </>
+              )}
+            </button>
+
+            {sidebarOpen && academicsOpen && (
+              <div className="mt-3 px-2">
+                <SidebarSubItem label="Create Class" href="/classes/create" />
+                <SidebarSubItem label="View Classes" href="/classes" />
+                <SidebarSubItem label="Create Section" href="/sections/create" />
+                <SidebarSubItem label="View Sections" href="/sections" />
+                <SidebarSubItem
+                  label="Create Academic Year"
+                  href="/academicyears/create"
+                />
+                <SidebarSubItem
+                  label="View Academic Years"
+                  href="/academicyears"
+                />
+                <SidebarSubItem
+                  label="Assign Class Sections"
+                  href="/academics/classsections"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Others */}
+          <SidebarItem icon={<UserCog size={18} />} label="Teachers" open={sidebarOpen} href="/teachers" />
+          <SidebarItem icon={<CalendarCheck2 size={18} />} label="Attendance" open={sidebarOpen} href="/attendance" />
+          <SidebarItem icon={<NotebookPen size={18} />} label="Subjects" open={sidebarOpen} href="/subjects" />
+          <SidebarItem icon={<CalendarClock size={18} />} label="Timetable" open={sidebarOpen} href="/timetable" />
+          <SidebarItem icon={<UsersRound size={18} />} label="Staff" open={sidebarOpen} href="/staff" />
+          <SidebarItem icon={<FileCheck2 size={18} />} label="Exams" open={sidebarOpen} href="/exams" />
+          <SidebarItem icon={<Wallet size={18} />} label="Fees" open={sidebarOpen} href="/fees" />
+          <SidebarItem icon={<Utensils size={18} />} label="Food" open={sidebarOpen} href="/food" />
         </div>
-
-        {/* Others */}
-        <SidebarItem icon={<UserCog size={18} />} label="Teachers" open={sidebarOpen} href="/teachers" />
-        <SidebarItem icon={<CalendarCheck2 size={18} />} label="Attendance" open={sidebarOpen} href="/attendance" />
-        <SidebarItem icon={<NotebookPen size={18} />} label="Subjects" open={sidebarOpen} href="/subjects" />
-        <SidebarItem icon={<CalendarClock size={18} />} label="Timetable" open={sidebarOpen} href="/timetable" />
-        <SidebarItem icon={<UsersRound size={18} />} label="Staff" open={sidebarOpen} href="/staff" />
-        <SidebarItem icon={<FileCheck2 size={18} />} label="Exams" open={sidebarOpen} href="/exams" />
-        <SidebarItem icon={<Wallet size={18} />} label="Fees" open={sidebarOpen} href="/fees" />
-        <SidebarItem icon={<Utensils size={18} />} label="Food" open={sidebarOpen} href="/food" />
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

@@ -358,3 +358,29 @@ export async function assignSectionsToClass(
 toast.success("Sections assigned to class successfully");
   return data;
 }
+
+// ---------- Profile ----------
+export async function getProfile() {
+  const token = getAdminToken();
+  const res = await fetch(`${BASE_URL}/api/v1/profile`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return res.json();
+}
+
+export async function updateProfile(data: { name: string; phone: string }) {
+  const token = getAdminToken();
+  const res = await fetch(`${BASE_URL}/api/v1/profile/update`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}

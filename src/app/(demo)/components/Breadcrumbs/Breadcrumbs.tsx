@@ -12,7 +12,7 @@ export default function Breadcrumbs() {
   const pathSegments = pathname.split("/").filter((segment) => segment !== "");
   
   return (
-    <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6 font-medium">
+    <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6 font-medium flex-wrap">
       <Link href="/dashboard" className="hover:text-primary transition-colors flex items-center gap-1.5">
         <Home size={14} />
         Dashboard
