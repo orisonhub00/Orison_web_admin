@@ -6,6 +6,10 @@ import {
   User,
   Phone,
   Calendar,
+  Camera,
+  Upload,
+  Loader2,
+  MapPin,
 } from "lucide-react";
 import { BASE_URL } from "@/lib/authClient";
 import { getAdminToken } from "@/lib/getToken";
@@ -30,11 +34,58 @@ type Student = {
   guardian_name: string | null;
   emergency_contact: string | null;
   status: string;
+  profile_pic: string | null;
+  academic_year: { id: string; year_name: string };
+  class: { id: string; class_name: string };
+  section: { id: string; section_name: string } | null;
 };
 
 export default function ViewStudent({ studentId, onBack }: ViewStudentProps) {
   const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  /* ================= IMAGE UPLOAD ================= */
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Optimistic Preview
+    const objectUrl = URL.createObjectURL(file);
+    setStudent((prev) => (prev ? { ...prev, profile_pic: objectUrl } : null));
+
+    const formData = new FormData();
+    formData.append("profile_pic", file);
+
+    try {
+      setUploading(true);
+      const res = await fetch(`${BASE_URL}/api/v1/students/${studentId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${getAdminToken()}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Profile picture updated");
+        // Update with actual S3 URL from server
+        // setStudent((prev) => (prev ? { ...prev, profile_pic: data.student.profile_pic } : null));
+        
+        // Reload to get fresh data ensures sync
+        window.location.reload(); 
+      } else {
+        toast.error(data.message || "Failed to update image");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error uploading image");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   /* ================= FETCH STUDENT ================= */
 
@@ -100,18 +151,81 @@ export default function ViewStudent({ studentId, onBack }: ViewStudentProps) {
       {/* Card */}
       <div className="bg-white rounded-xl p-6 border">
         {/* Header */}
-        <div className="flex items-center gap-4 border-b pb-4 mb-4">
-          <div className="h-16 w-16 rounded-full bg-orange-100 flex items-center justify-center">
-            <User className="text-orange-500" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6 mb-6">
+          <div className="flex items-center gap-5">
+            {/* Profile Pic with Upload */}
+            <div className="relative group">
+              <div className="h-24 w-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-sm">
+                {student.profile_pic ? (
+                  <img
+                    src={student.profile_pic}
+                    alt={student.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center bg-orange-50 text-orange-400">
+                    <User size={40} />
+                  </div>
+                )}
+              </div>
+
+              {/* Edit Icon Overlay */}
+              <label className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-lg border border-gray-100 cursor-pointer hover:bg-gray-50 transition-all hover:scale-105 active:scale-95">
+                {uploading ? (
+                  <Loader2 size={16} className="animate-spin text-primary" />
+                ) : (
+                  <Camera size={16} className="text-gray-600" />
+                )}
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  disabled={uploading}
+                />
+              </label>
+            </div>
+
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                {student.name}
+              </h3>
+              <p className="text-sm text-gray-500 mb-3 flex items-center gap-2">
+                <span className="font-medium text-gray-700">Admission No:</span>{" "}
+                {student.admission_no}
+              </p>
+
+              {/* Academic Info Badges */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="bg-blue-50 text-blue-700 text-xs px-3 py-1 rounded-full font-medium border border-blue-100">
+                  {student.academic_year?.year_name || "N/A"}
+                </span>
+                <span className="bg-purple-50 text-purple-700 text-xs px-3 py-1 rounded-full font-medium border border-purple-100">
+                  {student.class?.class_name || "N/A"}
+                </span>
+                {student.section && (
+                  <span className="bg-pink-50 text-pink-700 text-xs px-3 py-1 rounded-full font-medium border border-pink-100">
+                    {student.section.section_name}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold">
-              {student.name}
-            </h3>
-            <p className="text-sm text-gray-500">
-              Admission No: {student.admission_no}
-            </p>
+
+          {/* Status Badge */}
+          <div className="flex flex-col items-end gap-2">
+             <div
+            className={`px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide ${
+              student.status === "active"
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {student.status.toUpperCase()}
           </div>
+          <p className="text-xs text-gray-400 mt-1">Student Status</p>
+          </div>
+         
         </div>
 
         {/* Details */}
@@ -165,11 +279,7 @@ export default function ViewStudent({ studentId, onBack }: ViewStudentProps) {
             icon={<Phone size={14} />}
           />
 
-          <DetailField
-            label="Status"
-            value={student.status}
-            icon={<User size={14} />}
-          />
+
         </div>
       </div>
     </div>
