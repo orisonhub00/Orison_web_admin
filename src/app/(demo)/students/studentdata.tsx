@@ -435,7 +435,7 @@ return (
     )}
 
     {/* HEADER */}
-    <div className="bg-white rounded-2xl border px-6 py-4 mb-6 flex items-center gap-4">
+    <div className="bg-white rounded-2xl border px-6 py-4 mb-6 flex items-center gap-4 sticky top-[140px] z-30 shadow-sm">
       <button onClick={onBack} className="h-9 w-9 border rounded-full cursor-pointer hover:bg-gray-50 transition-colors">
         <ChevronLeft size={16} />
       </button>

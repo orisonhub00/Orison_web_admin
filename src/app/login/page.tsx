@@ -26,7 +26,7 @@ export default function Login() {
     OTP: "otp",
   };
 
-  const [stage, setStage] = useState(STAGES.SELECT_ROLE);
+  const [stage, setStage] = useState(STAGES.SELECT_METHOD); // ✅ Default to Method Selection
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -330,7 +330,7 @@ export default function Login() {
             />
           </div>
 
-          {/* ✅ STAGE: SELECT ROLE */}
+          {/* ✅ STAGE: SELECT ROLE - DISABLED
           {stage === STAGES.SELECT_ROLE && (
             <div className="w-full flex flex-col items-center justify-center">
               <div className="w-full max-w-[280px] space-y-3">
@@ -356,6 +356,7 @@ export default function Login() {
               </div>
             </div>
           )}
+          */}
 
           {/* ✅ STAGE: SELECT METHOD */}
           {stage === STAGES.SELECT_METHOD && (
@@ -375,8 +376,9 @@ export default function Login() {
                   Login with Email
                 </button>
 
+              {/* redirect to the landing page */}
                 <button
-                  onClick={() => setStage(STAGES.SELECT_ROLE)}
+                  onClick={() => router.push("/")}
                   className="w-full text-[12px] font-medium text-gray-500 hover:text-black transition pt-2"
                 >
                   ← Back

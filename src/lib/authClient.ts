@@ -10,8 +10,8 @@ import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
 
 export const BASE_URL =
-  // process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4447";
-  process.env.NEXT_PUBLIC_API_BASE_URL || "https://orison-server.vercel.app";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4447";
+  // process.env.NEXT_PUBLIC_API_BASE_URL || "https://orison-server.vercel.app";
 
 // Example: Admin Login
 export async function adminLogin(email: string, password: string) {
@@ -109,7 +109,6 @@ export async function getClassById(id: string) {
   const data = await res.json();
   if (!res.ok || !data.success)
     throw new Error(data.message || "Failed to fetch class details");
-  toast.success("Class details fetched successfully");
   return data.class;
 }
 
@@ -147,6 +146,62 @@ export async function getSections() {
     section_name: sec.section_name,
     status: sec.status || "active",
   }));
+}
+
+/* ---------------- ROLES & PERMISSIONS ---------------- */
+
+export async function getRoles() {
+  const token = getAdminToken();
+  if (!token) throw new Error("No admin token found");
+  const res = await fetch(`${BASE_URL}/api/v1/roles`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Failed to fetch roles");
+  return data.roles;
+}
+
+export async function createRole(roleData: { name: string; description?: string; permissions?: any[] }) {
+  const token = getAdminToken();
+  if (!token) throw new Error("No admin token found");
+  const res = await fetch(`${BASE_URL}/api/v1/roles/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(roleData),
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Failed to create role");
+  return data.role;
+}
+
+export async function getRolePermissions(roleId: string) {
+  const token = getAdminToken();
+  if (!token) throw new Error("No admin token found");
+  const res = await fetch(`${BASE_URL}/api/v1/roles/${roleId}/permissions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Failed to fetch permissions");
+  return data.permissions;
+}
+
+export async function updateRolePermissions(roleId: string, permissions: any[]) {
+  const token = getAdminToken();
+  if (!token) throw new Error("No admin token found");
+  const res = await fetch(`${BASE_URL}/api/v1/roles/${roleId}/permissions`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ permissions }),
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Failed to update permissions");
+  return data.permissions;
 }
 
 export async function getSectionById(id: string) {
@@ -328,7 +383,6 @@ export async function getSectionsByClass(
   if (!res.ok || !data.success) {
     throw new Error(data.message || "Failed to fetch class sections");
   }
-toast.success("Class sections fetched successfully");
   return data;
 }
 
@@ -383,4 +437,22 @@ export async function updateProfile(data: { name: string; phone: string }) {
     body: JSON.stringify(data),
   });
   return res.json();
+}
+
+// ---------- Registration ----------
+export async function getPublicRoles() {
+  const res = await fetch(`${BASE_URL}/api/v1/registration/roles`);
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Failed to fetch roles");
+  return data.roles;
+}
+
+export async function registerUser(formData: FormData) {
+  const res = await fetch(`${BASE_URL}/api/v1/registration/register`, {
+    method: "POST",
+    body: formData, // No Authorization header needed
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.message || "Registration failed");
+  return data;
 }

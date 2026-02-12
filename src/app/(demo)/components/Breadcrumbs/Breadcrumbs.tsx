@@ -17,6 +17,13 @@ export default function Breadcrumbs() {
         <Home size={14} />
         Dashboard
       </Link>
+
+      {(pathname.startsWith("/classes") || pathname.startsWith("/sections")) && (
+        <div className="flex items-center gap-2">
+          <ChevronRight size={14} className="text-gray-400" />
+          <span className="text-gray-500 font-medium">Academics</span>
+        </div>
+      )}
       
       {pathSegments.map((segment, index) => {
         const path = `/${pathSegments.slice(0, index + 1).join("/")}`;

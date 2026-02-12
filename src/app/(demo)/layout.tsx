@@ -20,9 +20,9 @@ export default function DemoLayout({
   const showSidebar = pathname !== '/homepage';
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen overflow-hidden">
       {showNavbar && <Navbar />}
-      <div className="flex w-full bg-[#f7ebe7] flex-1">
+      <div className="flex w-full bg-[#f7ebe7] flex-1 overflow-hidden">
         {/* Sidebar – Fixed and always visible */}
         {showSidebar && (
             <div className="h-screen sticky top-0 z-50">
@@ -32,9 +32,15 @@ export default function DemoLayout({
 
         {/* Main content – changes based on route */}
         <main className={`flex-1 overflow-y-auto ${!showSidebar ? 'w-full' : ''}`}>
-          {showSidebar && <Header onMenuClick={() => setMobileOpen(true)} />}
-          <div className="px-6 py-5">
-            {showSidebar && <Breadcrumbs />}
+          {showSidebar && (
+            <div className="sticky top-0 z-40 bg-[#f7ebe7]">
+              <Header onMenuClick={() => setMobileOpen(true)} />
+              <div className="px-6 pt-5 pb-2">
+                <Breadcrumbs />
+              </div>
+            </div>
+          )}
+          <div className="px-6 pb-5">
             {children}
           </div>
         </main>

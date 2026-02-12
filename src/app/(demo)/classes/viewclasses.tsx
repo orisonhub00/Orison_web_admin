@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, Edit2, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Edit2, Trash2 } from "lucide-react";
 import { getClassById, getClasses, deleteClass } from "@/lib/authClient";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -31,13 +31,17 @@ export default function ViewClasses({
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState<ClassType | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   /* ---------- FETCH CLASSES ---------- */
   useEffect(() => {
     const fetchClasses = async () => {
       setLoading(true);
       try {
-        const { classes: classesData } = await getClasses();
+        const { classes: classesData } = await getClasses("", 1, 1000);
         setClasses(
           classesData.map((c: ClassType) => ({
             ...c,
@@ -170,6 +174,7 @@ export default function ViewClasses({
         ) : classes.length === 0 ? (
           <div className="p-6 text-gray-500">No classes found</div>
         ) : (
+          <>
           <div className="divide-y">
             {/* HEADER */}
             <div className="grid grid-cols-5 px-6 py-3 text-xs font-semibold text-gray-500 bg-gray-50">
@@ -180,7 +185,9 @@ export default function ViewClasses({
             </div>
 
             {/* ROWS */}
-            {classes.map((c) => (
+            {classes
+              .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+              .map((c) => (
               <div
                 key={c.id}
                 onClick={() => handleClassClick(c)}
@@ -232,6 +239,33 @@ export default function ViewClasses({
               </div>
             ))}
           </div>
+
+            {/* PAGINATION */}
+            <div className="px-6 py-4 border-t flex items-center justify-between bg-gray-50 rounded-b-2xl">
+              <p className="text-sm text-gray-500">
+                Showing <span className="font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, classes.length)}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, classes.length)}</span> of <span className="font-medium">{classes.length}</span> results
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <div className="text-sm font-medium text-gray-700">
+                  Page {currentPage} of {Math.max(1, Math.ceil(classes.length / itemsPerPage))}
+                </div>
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(classes.length / itemsPerPage)))}
+                  disabled={currentPage >= Math.ceil(classes.length / itemsPerPage)}
+                  className="p-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

@@ -67,7 +67,7 @@ export default function AllStudents({
   const [sortField, setSortField] = useState<string>("name");
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
-  const limit = 10;
+  const limit = 5;
 
   /* ================= INIT ================= */
 
@@ -149,11 +149,11 @@ export default function AllStudents({
       setSearch("");
       setPage(1);
 
-      if (fetchedSections.length === 0 && cls.student_count > 0) {
+      if (fetchedSections.length === 0) {
         setSections([]);
         setSelectedSection(null);
         setCurrentView("students");
-        toast.success("No sections found. Showing all students in this class.");
+        // Only show toast if explicitly clicked, or removing it as per user preference for cleaner UI
       } else {
         setSections(fetchedSections);
         setCurrentView("sections");
@@ -201,10 +201,10 @@ export default function AllStudents({
   };
 
   useEffect(() => {
-    if (currentView === "students" && selectedClass && selectedSection) {
+    if (currentView === "students" && selectedClass) {
       fetchStudents();
     }
-  }, [page, search, sortField, sortOrder, currentView, selectedSection]);
+  }, [page, search, sortField, sortOrder, currentView, selectedSection, selectedClass]);
 
   /* ================= HANDLERS ================= */
 
@@ -498,7 +498,7 @@ export default function AllStudents({
   return (
     <div className="w-full min-h-screen bg-[#f8fafc] p-8">
       {/* Header with Search and Add Button */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div className="sticky top-[140px] z-30 flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex-wrap">
         <div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight">Student Management</h1>
           <p className="text-sm text-gray-400 font-medium mt-1">
@@ -508,7 +508,7 @@ export default function AllStudents({
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
           {/* Universal Search bar for Classes and Students */}
           {currentView !== "sections" && (
             <div className="relative">
