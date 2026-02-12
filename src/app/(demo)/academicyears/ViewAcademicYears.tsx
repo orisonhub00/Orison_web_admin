@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, Edit2, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Edit2, Trash2 } from "lucide-react";
 import {
   getAcademicYears,
   getAcademicYearById,
@@ -29,6 +29,10 @@ export default function ViewAcademicYears({
   const [selectedYear, setSelectedYear] = useState<AcademicYearType | null>(
     null
   );
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     const fetchYears = async () => {
@@ -113,9 +117,11 @@ export default function ViewAcademicYears({
       {loading ? (
         <div>Loading...</div>
       ) : (
-        <div className="space-y-3">
-          {years.map((y) => (
-            <div
+      <div className="space-y-3">
+          {years
+            .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+            .map((y) => (
+             <div
               key={y.id}
               className="flex justify-between items-center bg-white rounded-2xl shadow p-4 border cursor-pointer"
               onClick={() => fetchYearDetails(y.id)}
@@ -145,6 +151,32 @@ export default function ViewAcademicYears({
               </div>
             </div>
           ))}
+          
+          {/* PAGINATION */}
+          {years.length > 0 && (
+            <div className="flex items-center justify-between pt-4">
+              <p className="text-sm text-gray-500">
+                 Showing {Math.min((currentPage - 1) * itemsPerPage + 1, years.length)} to {Math.min(currentPage * itemsPerPage, years.length)} of {years.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border bg-white disabled:opacity-50 hover:bg-gray-50"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <div className="text-sm font-medium">Page {currentPage}</div>
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(years.length / itemsPerPage)))}
+                  disabled={currentPage >= Math.ceil(years.length / itemsPerPage)}
+                  className="p-2 rounded-lg border bg-white disabled:opacity-50 hover:bg-gray-50"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

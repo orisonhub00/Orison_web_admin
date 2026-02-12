@@ -16,6 +16,8 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
 
   const getPageTitle = (path: string) => {
     if (path.startsWith("/students")) return "Student Management";
+    if (path.startsWith("/classes")) return "Classes";
+    if (path.startsWith("/sections")) return "Sections";
     if (path === "/dashboard") return "Dashboard Overview";
     if (path.startsWith("/academics")) return "Academics";
     if (path.startsWith("/attendance")) return "Attendance";
@@ -84,7 +86,7 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
               {adminData?.name || "Admin"}
             </p>
             <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
-              {adminData?.role_id === "admin" ? "Administrator" : "Principal"}
+              {adminData?.role_name || "Staff"}
             </p>
           </div>
         </button>

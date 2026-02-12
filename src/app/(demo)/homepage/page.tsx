@@ -20,6 +20,14 @@ export default function Homepage() {
             </div>
             <div>
                 <Herobanner/>
+                <div className="mt-8 flex justify-center gap-4">
+                    <button 
+                        onClick={() => router.push('/register')}
+                        className="px-6 py-2.5 bg-white text-primary border border-primary font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                        Register Staff
+                    </button>
+                </div>
             </div>
         </div>
     )

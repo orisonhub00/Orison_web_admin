@@ -104,7 +104,13 @@ export default function Navbar() {
           </nav>
 
           {/* ✅ Login close to right border (Desktop) */}
-          <div className="ml-auto hidden items-center pr-1 md:flex">
+          <div className="ml-auto hidden items-center pr-1 md:flex gap-4">
+             <Link
+              href="/register"
+              className="rounded-md border border-primary px-4 py-2 text-[14px] font-medium text-primary hover:bg-primary/5 transition"
+            >
+              Register Staff
+            </Link>
             <Link
               href="/login"
               className="rounded-md bg-primary px-6 py-2 text-[14px] font-semibold text-primary-foreground hover:opacity-90 transition"
@@ -233,6 +239,17 @@ export default function Navbar() {
                     className="block w-full text-left text-white/90 hover:text-white transition"
                   >
                     About us
+                  </Link>
+                </li>
+
+                {/* Register Staff */}
+                 <li>
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileOpen(false)}
+                    className="block w-full text-left text-white/90 hover:text-white transition"
+                  >
+                    Register Staff
                   </Link>
                 </li>
 

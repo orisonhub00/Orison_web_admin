@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, Edit2, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Edit2, Trash2 } from "lucide-react";
 import { getSections, getSectionById, deleteSection } from "@/lib/authClient";
 import toast from "react-hot-toast";
 
@@ -28,6 +28,10 @@ export default function ViewSections({
     null
   );
   const [detailLoading, setDetailLoading] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   /* ---------- FETCH SECTIONS ---------- */
   useEffect(() => {
@@ -155,7 +159,8 @@ export default function ViewSections({
         ) : sections.length === 0 ? (
           <div className="p-6 text-gray-500">No sections found</div>
         ) : (
-          <div className="divide-y">
+          <>
+            <div className="divide-y">
             {/* TABLE HEADER */}
             <div className="grid grid-cols-6 px-6 py-3 text-xs font-semibold text-gray-500 bg-gray-50">
               <div className="col-span-2">SECTION NAME</div>
@@ -166,62 +171,91 @@ export default function ViewSections({
             </div>
 
             {/* TABLE ROWS */}
-            {sections.map((s) => (
-              <div
-                key={s.id}
-                onClick={() => fetchSectionDetails(s.id)}
-                className="grid grid-cols-6 px-6 py-4 text-sm items-center hover:bg-gray-50 cursor-pointer"
-              >
-                <div className="col-span-2 font-medium text-gray-900">
-                  {s.section_name}
-                </div>
+            {sections
+              .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+              .map((s) => (
+                <div
+                  key={s.id}
+                  onClick={() => fetchSectionDetails(s.id)}
+                  className="grid grid-cols-6 px-6 py-4 text-sm items-center hover:bg-gray-50 cursor-pointer"
+                >
+                  <div className="col-span-2 font-medium text-gray-900">
+                    {s.section_name}
+                  </div>
 
-                <div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      s.status === "active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-200 text-gray-700"
-                    }`}
-                  >
-                    {s.status}
-                  </span>
-                </div>
+                  <div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        s.status === "active"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-200 text-gray-700"
+                      }`}
+                    >
+                      {s.status}
+                    </span>
+                  </div>
 
-                <div className="text-gray-600">
-                  {new Date(s.createdAt).toLocaleDateString()}
-                </div>
+                  <div className="text-gray-600">
+                    {new Date(s.createdAt).toLocaleDateString()}
+                  </div>
 
-                <div className="text-gray-600">
-                  {new Date(s.updatedAt).toLocaleDateString()}
-                </div>
+                  <div className="text-gray-600">
+                    {new Date(s.updatedAt).toLocaleDateString()}
+                  </div>
 
-                <div className="flex justify-end gap-4">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditSection(s);
-                    }}
-                    className="text-blue-500 hover:text-blue-700"
-                    title="Edit"
-                  >
-                    <Edit2 size={18} />
-                  </button>
+                  <div className="flex justify-end gap-4">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditSection(s);
+                      }}
+                      className="text-blue-500 hover:text-blue-700"
+                      title="Edit"
+                    >
+                      <Edit2 size={18} />
+                    </button>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(s.id);
-                    }}
-                    className="text-red-500 hover:text-red-700"
-                    title="Delete"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(s.id);
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                      title="Delete"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
+
+            {/* PAGINATION */}
+            <div className="px-6 py-4 border-t flex items-center justify-between bg-gray-50 rounded-b-2xl">
+              <p className="text-sm text-gray-500">
+                Showing <span className="font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, sections.length)}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, sections.length)}</span> of <span className="font-medium">{sections.length}</span> results
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <div className="text-sm font-medium text-gray-700">
+                  Page {currentPage} of {Math.max(1, Math.ceil(sections.length / itemsPerPage))}
+                </div>
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(sections.length / itemsPerPage)))}
+                  disabled={currentPage >= Math.ceil(sections.length / itemsPerPage)}
+                  className="p-2 rounded-lg border bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+            </>
         )}
       </div>
     </div>
