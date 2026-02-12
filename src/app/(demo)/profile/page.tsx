@@ -1,21 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { User, Phone, Mail, BadgeCheck, Save, Loader2 } from "lucide-react";
+import { User, Phone, Mail, BadgeCheck, Save, Loader2, Camera } from "lucide-react";
 import toast from "react-hot-toast";
 import { getProfile, updateProfile } from "@/lib/authClient";
 import LoadingOverlay from "@/components/reuseble_components/LoadingOverlay";
+import { BASE_URL } from "@/lib/authClient";
+import { getAdminToken } from "@/lib/getToken";
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   const [data, setData] = useState({
     name: "",
     email: "",
     phone: "",
     role_id: "",
+    role_name: "",
     status: "",
+    profile_pic: "",
   });
 
   useEffect(() => {
@@ -32,7 +37,9 @@ export default function ProfilePage() {
           email: res.user.email || "",
           phone: res.user.phone || "",
           role_id: res.user.role_id || "",
+          role_name: res.user.role?.name || "No Role",
           status: res.user.status || "",
+          profile_pic: res.user.profile_pic || "",
         });
       } else {
         toast.error(res.message || "Failed to load profile");
@@ -45,15 +52,39 @@ export default function ProfilePage() {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Optimistic Preview
+    const objectUrl = URL.createObjectURL(file);
+    setData((prev) => ({ ...prev, profile_pic: objectUrl }));
+    setSelectedFile(file);
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
-      const res = await updateProfile({
-        name: data.name,
-        phone: data.phone,
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("phone", data.phone);
+      if (selectedFile) {
+        formData.append("profile_pic", selectedFile);
+      }
+
+      // We need to use fetch directly or update the updateProfile helper to support FormData
+      // Since updateProfile in authClient might send JSON, let's use direct fetch here for FormData support
+      const res = await fetch(`${BASE_URL}/api/v1/profile/update`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${getAdminToken()}`,
+        },
+        body: formData,
       });
 
-      if (res.success) {
+      const response = await res.json();
+
+      if (response.success) {
         toast.success("Details updated successfully!");
         // Update local storage user if needed
         const user = localStorage.getItem("user");
@@ -61,10 +92,16 @@ export default function ProfilePage() {
            const parsed = JSON.parse(user);
            parsed.name = data.name;
            parsed.phone = data.phone;
+           if (response.user.profile_pic) {
+             parsed.profile_pic = response.user.profile_pic;
+           }
            localStorage.setItem("user", JSON.stringify(parsed));
+           
+           // Force reload to update header image if necessary, or use context
+           window.dispatchEvent(new Event("storage")); 
         }
       } else {
-        toast.error(res.message || "Update failed");
+        toast.error(response.message || "Update failed");
       }
     } catch (err) {
       console.error(err);
@@ -95,6 +132,35 @@ export default function ProfilePage() {
         </div>
         
         <div className="p-6 grid gap-6 md:grid-cols-2">
+          {/* Profile Image & Name Section in Grid */}
+           <div className="col-span-1 md:col-span-2 flex flex-col items-center justify-center mb-6">
+              <div className="relative group h-32 w-32 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-sm mb-4">
+                {data.profile_pic ? (
+                  <img
+                    src={data.profile_pic}
+                    alt={data.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center bg-primary/10 text-primary">
+                    <User size={48} />
+                  </div>
+                )}
+                
+                {/* Overlay for upload */}
+                 <label className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                   <Camera className="text-white" />
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                 </label>
+              </div>
+              <p className="text-sm font-medium text-gray-500">Click image to change</p>
+           </div>
+
           {/* Name */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Full Name</label>
@@ -143,7 +209,7 @@ export default function ProfilePage() {
               <BadgeCheck className="absolute left-3 top-1/2 -translate-y-1/2 text-primary" size={18} />
               <input
                 disabled
-                value={data.role_id === "admin" ? "Administrator" : "Principal"}
+                value={data.role_name}
                 className="w-full pl-10 pr-4 py-2 bg-primary/5 border border-primary/20 rounded-lg text-primary font-medium cursor-not-allowed"
               />
             </div>
