@@ -7,15 +7,8 @@ import toast from "react-hot-toast";
 import { Loader2, Upload, User, Mail, Phone, Lock, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import emailjs from "@emailjs/browser";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4447";
-
-// ⚠️ REPLACE THESE WITH YOUR EMAILJS CREDENTIALS
-// OR BETTER, USE ENVIRONMENT VARIABLES
-const EMAILJS_SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "YOUR_SERVICE_ID";
-const EMAILJS_TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "YOUR_TEMPLATE_ID";
-const EMAILJS_PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || "YOUR_PUBLIC_KEY";
 
 
 export default function RegisterPage() {
@@ -74,35 +67,6 @@ export default function RegisterPage() {
 
       const res = await registerUser(data);
       
-      // ✅ Send Notification to Admin via EmailJS
-      try {
-           const newUser = res.user; // Ensure backend returns user object
-           const roleName = roles.find(r => r.id === formData.role_id)?.name || "Unknown Role";
-           
-           const templateParams = {
-              name: `${formData.first_name} ${formData.last_name}`,
-              email: formData.email,
-              phone: formData.phone,
-              role: roleName,
-              time: new Date().toLocaleString(),
-              approve_link: `${BASE_URL}/api/v1/registration/approve?token=${newUser.approval_token}`,
-              reject_link: `${BASE_URL}/api/v1/registration/reject?token=${newUser.approval_token}`,
-           };
-
-           await emailjs.send(
-              EMAILJS_SERVICE_ID,
-              EMAILJS_TEMPLATE_ID,
-              templateParams,
-              EMAILJS_PUBLIC_KEY
-           );
-           console.log("✅ Admin notification sent via EmailJS");
-
-      } catch (emailErr) {
-          console.error("❌ EmailJS Error:", emailErr);
-          // Don't block success UI, just log it
-          toast.error("Profile submitted, but failed to notify admin.");
-      }
-
       setSuccess(true);
       toast.success("Registration submitted successfully");
     } catch (error: any) {
